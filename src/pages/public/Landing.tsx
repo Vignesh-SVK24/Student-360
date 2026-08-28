@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Users, Sparkles, ArrowRight, ShieldCheck, Award, TrendingUp, Code2, Layers, Compass } from "lucide-react";
+import { GraduationCap, Users, Sparkles, ArrowRight, ShieldCheck, Award, TrendingUp, Layers, Compass } from "lucide-react";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
 
 export default function Landing() {
@@ -25,15 +25,6 @@ export default function Landing() {
           </div>
 
           <div className="flex items-center gap-3">
-            <a 
-              href="https://github.com/Vignesh-SVK24/Student-360" 
-              target="_blank" 
-              rel="noreferrer"
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/10 border border-white/10 transition-all"
-            >
-              <Code2 className="w-3.5 h-3.5 text-indigo-400" />
-              <span>GitHub Repo</span>
-            </a>
             <button
               onClick={() => navigate("/login/student")}
               className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
