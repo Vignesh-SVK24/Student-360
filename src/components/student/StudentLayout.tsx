@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GraduationCap,
-  ChevronRight,
+  Home,
   ChevronLeft,
   User,
   Trophy,
@@ -247,18 +247,18 @@ export default function StudentLayout({
         {/* Floating Liquid Quick Menu */}
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
           <motion.div
-            className="flex items-center bg-slate-950/85 backdrop-blur-2xl rounded-[32px] p-2 shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/15"
-            animate={{ width: menuOpen ? "auto" : "64px" }}
+            className="flex items-center bg-slate-950/90 backdrop-blur-2xl rounded-[40px] p-2 sm:p-2.5 shadow-[0_20px_60px_rgba(0,0,0,0.5)] border border-white/20"
+            animate={{ width: menuOpen ? "auto" : "74px" }}
             transition={{ type: "spring", stiffness: 350, damping: 28 }}
           >
             <motion.button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-colors shrink-0 cursor-pointer shadow-inner"
-              animate={{ rotate: menuOpen ? 180 : 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              title={menuOpen ? "Close Quick Menu" : "Open Student 360 Navigation"}
+              className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-indigo-500 active:scale-95 flex items-center justify-center text-white transition-all shrink-0 cursor-pointer shadow-lg shadow-purple-500/35 border border-white/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title={menuOpen ? "Close Student Navigation" : "Open Student 360 Quick Menu"}
             >
-              <ChevronRight className="w-6 h-6" />
+              <Home className="w-7 h-7 text-white drop-shadow" />
             </motion.button>
 
             <AnimatePresence>
