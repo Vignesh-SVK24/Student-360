@@ -231,7 +231,7 @@ export default function Projects() {
                     href={proj.demoUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex-1 py-2.5 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors border border-blue-200"
+                    className="flex-1 py-2.5 px-4 bg-[#629176]/15 hover:bg-[#629176]/25 text-[#0d4933] rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors border border-[#629176]/30"
                   >
                     <ExternalLink className="w-4 h-4" /> Live Demo
                   </a>

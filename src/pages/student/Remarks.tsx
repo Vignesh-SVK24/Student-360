@@ -14,7 +14,7 @@ export default function Remarks() {
       case "Excellent":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "Good":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-[#629176]/20 text-[#0d4933] border-[#629176]/40";
       case "Better":
         return "bg-purple-100 text-purple-800 border-purple-200";
       case "Average":
@@ -33,14 +33,14 @@ export default function Remarks() {
       showBack={true}
     >
       <div className="space-y-6 max-w-4xl mx-auto">
-        <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-between text-xs text-indigo-900">
+        <div className="p-4 rounded-2xl bg-[#629176]/10 border border-[#629176]/30 flex items-center justify-between text-xs text-[#0d4933]">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-[#0d4933] shrink-0" />
             <span className="font-semibold">
               Faculty remarks are confidential institutional appraisals and are strictly read-only for students.
             </span>
           </div>
-          <span className="font-bold text-[10px] uppercase bg-indigo-200/60 px-2 py-0.5 rounded text-indigo-800 hidden sm:inline">
+          <span className="font-bold text-[10px] uppercase bg-[#629176]/25 text-[#0d4933] px-2 py-0.5 rounded text-[#0d4933] hidden sm:inline">
             Official Record
           </span>
         </div>

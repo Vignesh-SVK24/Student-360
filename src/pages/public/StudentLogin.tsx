@@ -55,7 +55,7 @@ export default function StudentLogin() {
 
         <div className="w-full max-w-4xl grid lg:grid-cols-12 rounded-3xl overflow-hidden bg-slate-900/60 backdrop-blur-2xl border border-white/10 shadow-[0_20px_70px_rgba(0,0,0,0.6)]">
           {/* Left Visual Column */}
-          <div className="lg:col-span-5 bg-gradient-to-br from-purple-900/40 via-indigo-950/70 to-slate-950 p-8 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/10 relative overflow-hidden">
+          <div className="lg:col-span-5 bg-gradient-to-br from-purple-900/40 via-[#042821]/70 to-slate-950 p-8 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
@@ -192,7 +192,7 @@ export default function StudentLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white font-bold text-sm shadow-lg shadow-[#0d4933]/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 <span>{loading ? "Signing in..." : "Access Student Portal"}</span>
                 <ArrowRight className="w-4 h-4" />

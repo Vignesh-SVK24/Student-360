@@ -36,9 +36,9 @@ export default function StudentDashboard() {
       value: student.academic.cgpa.toString(),
       sub: "No Active Arrears",
       icon: Star,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-100",
+      color: "text-[#0d4933]",
+      bg: "bg-[#629176]/15",
+      border: "border-[#629176]/30",
       path: "/student/profile"
     },
     {
@@ -56,9 +56,9 @@ export default function StudentDashboard() {
       value: student.skills.length.toString(),
       sub: "Across 4 Disciplines",
       icon: Code2,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-      border: "border-indigo-100",
+      color: "text-[#0d4933]",
+      bg: "bg-[#629176]/15",
+      border: "border-[#629176]/30",
       path: "/student/skills"
     },
     {
@@ -144,7 +144,7 @@ export default function StudentDashboard() {
               <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-500">
                 <span className="bg-slate-100 px-3 py-1 rounded-lg">Year {student.year}</span>
                 <span className="bg-slate-100 px-3 py-1 rounded-lg">Section {student.section}</span>
-                <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg font-semibold">
+                <span className="bg-[#629176]/15 text-[#0d4933] px-3 py-1 rounded-lg font-semibold border border-[#629176]/30">
                   {student.personal.residenceType}
                 </span>
               </div>
@@ -184,7 +184,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Profile Completion Indicator */}
-        <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] rounded-3xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-300" />

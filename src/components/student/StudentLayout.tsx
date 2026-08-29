@@ -95,7 +95,7 @@ export default function StudentLayout({
                 </button>
               ) : (
                 <Link to="/student/dashboard" className="flex items-center gap-3 group cursor-pointer">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-purple-500/25 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#042821] via-[#0d4933] to-[#629176] flex items-center justify-center text-white shadow-md shadow-[#0d4933]/25 group-hover:scale-105 transition-transform">
                     <GraduationCap className="w-5 h-5" />
                   </div>
                   <div className="hidden sm:block">
@@ -155,7 +155,7 @@ export default function StudentLayout({
                           <p className="font-semibold text-slate-800">Faculty Remark Posted</p>
                           <p className="text-[11px] text-slate-500 mt-0.5">Dr. Sarah Jenkins added an endorsement on your NLP project.</p>
                         </div>
-                        <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-100 text-xs">
+                        <div className="p-2 rounded-xl bg-[#629176]/10 border border-[#629176]/25 text-xs">
                           <p className="font-semibold text-slate-800">Attendance Report Available</p>
                           <p className="text-[11px] text-slate-500 mt-0.5">Overall attendance updated to {student.overallAttendance}%. Good standing.</p>
                         </div>
@@ -253,7 +253,7 @@ export default function StudentLayout({
           >
             <motion.button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-indigo-500 active:scale-95 flex items-center justify-center text-white transition-all shrink-0 cursor-pointer shadow-lg shadow-purple-500/35 border border-white/20"
+              className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] active:scale-95 flex items-center justify-center text-white transition-all shrink-0 cursor-pointer shadow-lg shadow-[#0d4933]/50 border border-white/20"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title={menuOpen ? "Close Student Navigation" : "Open Student 360 Quick Menu"}
@@ -285,7 +285,7 @@ export default function StudentLayout({
                       whileTap={{ scale: 0.92 }}
                       className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all relative group cursor-pointer ${
                         isCurrent(item.path)
-                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/50 ring-2 ring-purple-300/40"
+                          ? "bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] text-white shadow-lg shadow-[#0d4933]/50 ring-2 ring-[#629176]/40"
                           : "bg-white/5 text-slate-300 hover:text-white hover:bg-white/20"
                       }`}
                     >

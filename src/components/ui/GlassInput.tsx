@@ -27,7 +27,7 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
               w-full rounded-xl bg-white/10 dark:bg-black/10 backdrop-blur-md 
               border border-white/20 dark:border-white/10 
               px-4 py-2.5 text-slate-800 dark:text-white placeholder-slate-500 dark:placeholder-slate-400
-              focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50
+              focus:outline-none focus:ring-2 focus:ring-[#629176]/50 focus:border-[#0d4933]/50
               transition-all duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]
               ${icon ? 'pl-10' : ''}
               ${error ? 'border-red-500/50 focus:ring-red-500/50' : ''}
@@ -60,7 +60,7 @@ export const GlassTextarea = forwardRef<HTMLTextAreaElement, React.TextareaHTMLA
             w-full rounded-xl bg-white/10 dark:bg-black/10 backdrop-blur-md 
             border border-white/20 dark:border-white/10 
             px-4 py-2.5 text-slate-800 dark:text-white placeholder-slate-500 dark:placeholder-slate-400
-            focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50
+            focus:outline-none focus:ring-2 focus:ring-[#629176]/50 focus:border-[#0d4933]/50
             transition-all duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]
             ${error ? 'border-red-500/50 focus:ring-red-500/50' : ''}
             ${className}

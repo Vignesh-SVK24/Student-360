@@ -6,7 +6,7 @@
   }
   
   body {
-    @apply antialiased text-slate-900 bg-slate-950 min-h-screen selection:bg-purple-500/30 selection:text-purple-200;
+    @apply antialiased text-slate-900 bg-slate-950 min-h-screen selection:bg-[#0d4933]/30 selection:text-[#629176];
   }
 }
 
@@ -20,11 +20,11 @@
 }
 
 .glass-surface-dark {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(4, 40, 33, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  border: 1px solid rgba(98, 145, 118, 0.2);
+  box-shadow: 0 20px 50px -10px rgba(4, 40, 33, 0.7), 0 0 0 1px rgba(98, 145, 118, 0.1) inset;
 }
 
 .glass-pill {
@@ -32,15 +32,23 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 12px 35px -8px rgba(30, 41, 59, 0.15), 0 1px 0 rgba(255, 255, 255, 1) inset;
+  box-shadow: 0 12px 35px -8px rgba(13, 73, 51, 0.15), 0 1px 0 rgba(255, 255, 255, 1) inset;
+}
+
+.glass-glow-emerald {
+  box-shadow: 0 0 50px -10px rgba(13, 73, 51, 0.4);
+}
+
+.glass-glow-sage {
+  box-shadow: 0 0 50px -10px rgba(98, 145, 118, 0.35);
 }
 
 .glass-glow-blue {
-  box-shadow: 0 0 50px -10px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 50px -10px rgba(13, 73, 51, 0.35);
 }
 
 .glass-glow-purple {
-  box-shadow: 0 0 50px -10px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 50px -10px rgba(98, 145, 118, 0.3);
 }
 
 /* Custom Scrollbar for Glass Drawers and Containers */

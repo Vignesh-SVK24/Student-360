@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { cn } from "../../lib/utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,7 +11,7 @@ export function Button({ className, variant = "primary", size = "md", ...props }
   
   const variants = {
     primary: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm focus:ring-slate-900",
-    secondary: "bg-blue-50 text-blue-700 hover:bg-blue-100 focus:ring-blue-500",
+    secondary: "bg-[#0d4933]/10 text-[#0d4933] hover:bg-[#629176]/20 focus:ring-[#629176]",
     destructive: "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500",
     ghost: "hover:bg-slate-100 text-slate-700 focus:ring-slate-500",
     outline: "border border-slate-200 bg-transparent hover:bg-slate-50 text-slate-700 focus:ring-slate-500",

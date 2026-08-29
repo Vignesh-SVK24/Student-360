@@ -97,7 +97,7 @@ export default function FacultyStudentProfile() {
             <p className="text-slate-500 text-sm mb-6">The requested student profile could not be located.</p>
             <button
               onClick={() => navigate('/faculty/dashboard')}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] text-white font-bold text-xs shadow-md shadow-[#0d4933]/30"
             >
               Return to Faculty Dashboard
             </button>
@@ -134,7 +134,7 @@ export default function FacultyStudentProfile() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="text-xs font-bold px-3 py-1 rounded-xl bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
               {student.registerNumber}
             </span>
             <div className="h-6 w-px bg-slate-300/60 hidden sm:block"></div>
@@ -156,9 +156,9 @@ export default function FacultyStudentProfile() {
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{student.name}</h1>
-                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <ShieldCheck className="w-5 h-5 text-[#0d4933]" />
               </div>
-              <p className="text-sm font-bold text-blue-600 font-mono mb-3">{student.registerNumber}</p>
+              <p className="text-sm font-bold text-[#0d4933] font-mono mb-3">{student.registerNumber}</p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs font-semibold text-slate-600">
                 <span className="bg-slate-100/80 px-3 py-1 rounded-lg border border-slate-200/50">{student.department}</span>
                 <span className="bg-slate-100/80 px-3 py-1 rounded-lg border border-slate-200/50">{student.course}</span>
@@ -193,7 +193,7 @@ export default function FacultyStudentProfile() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
                   activeTab === tab.id 
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/25" 
+                    ? "bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] text-white shadow-md shadow-[#0d4933]/30" 
                     : "text-slate-600 hover:bg-white/60"
                 }`}
               >
@@ -211,7 +211,7 @@ export default function FacultyStudentProfile() {
             <div className="md:col-span-2 space-y-6">
               <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <Sparkles className="w-4 h-4 text-[#0d4933]" />
                   <span>360° Academic & Co-Curricular Profile Summary</span>
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
@@ -232,7 +232,7 @@ export default function FacultyStudentProfile() {
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Verified Skill Highlights</h4>
                   <div className="flex flex-wrap gap-2">
                     {student.skills.map((sk, idx) => (
-                      <span key={idx} className="px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      <span key={idx} className="px-3 py-1 rounded-xl text-xs font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
                         {sk}
                       </span>
                     ))}
@@ -247,7 +247,7 @@ export default function FacultyStudentProfile() {
                     <Briefcase className="w-4 h-4 text-purple-600" />
                     <span>Featured Showcase Projects ({student.projectsList?.length || 0})</span>
                   </h3>
-                  <button onClick={() => setActiveTab("Projects")} className="text-xs font-bold text-blue-600 hover:underline cursor-pointer">
+                  <button onClick={() => setActiveTab("Projects")} className="text-xs font-bold text-[#0d4933] hover:underline cursor-pointer">
                     View All Projects →
                   </button>
                 </div>
@@ -307,7 +307,7 @@ export default function FacultyStudentProfile() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-5">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-600" />
+                <User className="w-4 h-4 text-[#0d4933]" />
                 <span>Personal Particulars</span>
               </h3>
 
@@ -318,7 +318,7 @@ export default function FacultyStudentProfile() {
                 </div>
                 <div className="p-3.5 rounded-2xl bg-white/80 border border-slate-100">
                   <p className="text-slate-400 text-[11px] font-semibold">Register Number</p>
-                  <p className="font-bold text-blue-600 font-mono mt-0.5">{student.registerNumber}</p>
+                  <p className="font-bold text-[#0d4933] font-mono mt-0.5">{student.registerNumber}</p>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-white/80 border border-slate-100">
                   <p className="text-slate-400 text-[11px] font-semibold">Date of Birth</p>
@@ -403,12 +403,12 @@ export default function FacultyStudentProfile() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Code2 className="w-5 h-5 text-blue-600" />
+                  <Code2 className="w-5 h-5 text-[#0d4933]" />
                   <span>Verified Skill Inventory & Competencies</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Categorized proficiency verified through lab coursework and project submissions</p>
               </div>
-              <span className="px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
                 {student.skills.length} Technical Skills Verified
               </span>
             </div>
@@ -425,7 +425,7 @@ export default function FacultyStudentProfile() {
                         proficiency === "Expert" 
                           ? "bg-purple-50 text-purple-700 border border-purple-200" 
                           : proficiency === "Advanced" 
-                          ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                          ? "bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30" 
                           : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       }`}>
                         {proficiency}
@@ -439,7 +439,7 @@ export default function FacultyStudentProfile() {
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                         <div 
-                          className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full" 
+                          className="bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] h-full rounded-full" 
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -530,7 +530,7 @@ export default function FacultyStudentProfile() {
                   <div className="space-y-3 pt-2 border-t border-slate-100">
                     <div className="flex flex-wrap gap-1.5">
                       {proj.tech.map((t, ti) => (
-                        <span key={ti} className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50">
+                        <span key={ti} className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30/50">
                           {t}
                         </span>
                       ))}
@@ -540,7 +540,7 @@ export default function FacultyStudentProfile() {
                       href={proj.githubUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors"
+                      className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-[#0d4933] transition-colors"
                     >
                       <GithubIcon />
                       <span>{proj.githubUrl}</span>
@@ -559,12 +559,12 @@ export default function FacultyStudentProfile() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-blue-600" />
+                  <Award className="w-5 h-5 text-[#0d4933]" />
                   <span>Verified External Industry Certifications</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Third-party accredited credentials from AWS, Google, and Coursera</p>
               </div>
-              <span className="px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
                 {student.certsList?.length || 0} Credentials
               </span>
             </div>
@@ -573,7 +573,7 @@ export default function FacultyStudentProfile() {
               {student.certsList?.map((cert, idx) => (
                 <div key={idx} className="p-5 rounded-2xl bg-white/80 border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
                   <div>
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-3 border border-blue-200">
+                    <div className="w-10 h-10 rounded-xl bg-[#629176]/15 flex items-center justify-center text-[#0d4933] mb-3 border border-[#629176]/30">
                       <Award className="w-5 h-5" />
                     </div>
                     <h4 className="text-sm font-bold text-slate-900 leading-snug">{cert.title}</h4>
@@ -586,7 +586,7 @@ export default function FacultyStudentProfile() {
                       href={cert.verifyUrl} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                      className="text-xs font-bold text-[#0d4933] hover:underline flex items-center gap-1"
                     >
                       <span>Verify</span>
                       <ExternalLink className="w-3 h-3" />
@@ -604,7 +604,7 @@ export default function FacultyStudentProfile() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <Calendar className="w-5 h-5 text-[#0d4933]" />
                   <span>Course-Wise Attendance Compliance Log</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Statutory regulatory minimum requirement: 75% attendance</p>
@@ -635,7 +635,7 @@ export default function FacultyStudentProfile() {
                   {subjectAttendance.map((sub, i) => (
                     <tr key={i} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-4 py-3.5">
-                        <span className="font-mono font-bold text-blue-600 mr-2">{sub.code}</span>
+                        <span className="font-mono font-bold text-[#0d4933] mr-2">{sub.code}</span>
                         <span className="font-bold text-slate-800">{sub.title}</span>
                       </td>
                       <td className="px-4 py-3.5 text-center text-slate-600 font-mono">{sub.total} hrs</td>
@@ -665,7 +665,7 @@ export default function FacultyStudentProfile() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <MessageSquare className="w-5 h-5 text-[#0d4933]" />
                   <span>Faculty Mentorship & Conduct Remarks</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Official mentorship feedback registered in student permanent institutional transcript</p>
@@ -673,7 +673,7 @@ export default function FacultyStudentProfile() {
 
               <button
                 onClick={() => setShowAddRemark(!showAddRemark)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer self-start"
+                className="px-4 py-2 bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-[#0d4933]/25 transition-all cursor-pointer self-start"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Faculty Remark</span>
@@ -682,15 +682,15 @@ export default function FacultyStudentProfile() {
 
             {/* Interactive Add Remark Box */}
             {showAddRemark && (
-              <form onSubmit={handleAddRemark} className="p-5 rounded-2xl bg-blue-50/50 border border-blue-200/80 space-y-4">
+              <form onSubmit={handleAddRemark} className="p-5 rounded-2xl bg-[#629176]/10 border border-[#629176]/30 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">New Mentorship Assessment</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0d4933]">New Mentorship Assessment</h4>
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-slate-600">Grade Assessment:</label>
                     <select 
                       value={newGrade} 
                       onChange={(e) => setNewGrade(e.target.value)}
-                      className="px-3 py-1 rounded-lg bg-white border border-blue-200 text-xs font-bold text-blue-900 focus:outline-none"
+                      className="px-3 py-1 rounded-lg bg-white border border-[#629176]/30 text-xs font-bold text-[#0d4933] focus:outline-none"
                     >
                       <option value="Excellent">Excellent</option>
                       <option value="Good">Good</option>
@@ -705,7 +705,7 @@ export default function FacultyStudentProfile() {
                   value={newRemarkText}
                   onChange={(e) => setNewRemarkText(e.target.value)}
                   placeholder="Enter detailed academic or behavioral assessment for this student..."
-                  className="w-full p-3 rounded-xl bg-white border border-blue-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full p-3 rounded-xl bg-white border border-[#629176]/30 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#629176]/30"
                 />
 
                 <div className="flex justify-end gap-2">
@@ -718,7 +718,7 @@ export default function FacultyStudentProfile() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] cursor-pointer"
                   >
                     Save Endorsement
                   </button>
@@ -737,7 +737,7 @@ export default function FacultyStudentProfile() {
                     </div>
                     <div className="text-right">
                       <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                        rem.grade === "Excellent" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-blue-50 text-blue-700 border border-blue-200"
+                        rem.grade === "Excellent" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30"
                       }`}>
                         {rem.grade}
                       </span>

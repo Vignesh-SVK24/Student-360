@@ -223,7 +223,7 @@ export default function StudentProfile() {
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/60 space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Building className="w-5 h-5 text-indigo-600" /> Parent / Guardian Details
+                <Building className="w-5 h-5 text-[#0d4933]" /> Parent / Guardian Details
               </h3>
               <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
                 Family Record
@@ -264,11 +264,11 @@ export default function StudentProfile() {
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-blue-600" /> Prior Academic Background
+                <GraduationCap className="w-5 h-5 text-[#0d4933]" /> Prior Academic Background
               </h3>
               <p className="text-xs text-slate-500 font-medium">Secondary and Higher Secondary certified credentials</p>
             </div>
-            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-semibold text-[#0d4933] bg-[#629176]/15 border border-[#629176]/30 px-2.5 py-1 rounded-full">
               Read-Only (Verified)
             </span>
           </div>
@@ -277,7 +277,7 @@ export default function StudentProfile() {
             {/* 10th Card */}
             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                <span className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-[#629176]/20 text-[#0d4933] border border-[#629176]/30">
                   Class 10th (SSLC / CBSE)
                 </span>
                 <span className="text-lg font-black text-slate-900">{student.academic.percentage10th}</span>
@@ -343,17 +343,17 @@ export default function StudentProfile() {
               href={student.links.linkedin}
               target="_blank"
               rel="noreferrer"
-              className="p-5 rounded-2xl border border-slate-200/80 hover:border-blue-300 hover:shadow-md transition-all group flex flex-col justify-between"
+              className="p-5 rounded-2xl border border-slate-200/80 hover:border-[#629176]/40 hover:shadow-md transition-all group flex flex-col justify-between"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] text-white flex items-center justify-center shadow-sm">
                   <Globe className="w-5 h-5" />
                 </div>
-                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#0d4933] transition-colors" />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">LinkedIn</p>
-                <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                <p className="text-sm font-bold text-slate-900 group-hover:text-[#0d4933] transition-colors truncate">
                   {student.links.linkedin.replace("https://", "")}
                 </p>
               </div>

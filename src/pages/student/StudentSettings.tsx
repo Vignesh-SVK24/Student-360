@@ -90,7 +90,7 @@ export default function StudentSettings() {
         {/* Security & Password Card */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/60 space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#629176]/15 text-[#0d4933] flex items-center justify-center">
               <Lock className="w-5 h-5" />
             </div>
             <div>
@@ -162,7 +162,7 @@ export default function StudentSettings() {
         {/* Notifications Card */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/60 space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#629176]/15 text-[#0d4933] flex items-center justify-center">
               <Bell className="w-5 h-5" />
             </div>
             <div>

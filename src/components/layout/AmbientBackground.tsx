@@ -23,7 +23,7 @@ export function AmbientBackground({ theme = 'light', children }: AmbientBackgrou
     if (isDark) {
       return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-[#070b14]';
     }
-    return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/70 via-slate-50 to-purple-50/50';
+    return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0d4933]/15 via-slate-50 to-[#629176]/10';
   };
 
   return (
@@ -33,45 +33,45 @@ export function AmbientBackground({ theme = 'light', children }: AmbientBackgrou
         {/* Base dynamic gradient */}
         <div className={`absolute inset-0 ${getBaseGradient()}`} />
         
-        {/* Animated Light Orb 1 - Gold / Blue */}
+        {/* Animated Light Orb 1 - Sage / Emerald */}
         <motion.div 
           animate={{ 
             scale: [1, 1.25, 1],
             x: [0, 40, 0],
             y: [0, -30, 0],
-            opacity: isEmeraldGold ? [0.3, 0.5, 0.3] : isDark ? [0.25, 0.45, 0.25] : [0.35, 0.6, 0.35]
+            opacity: isEmeraldGold ? [0.3, 0.5, 0.3] : isDark ? [0.25, 0.45, 0.25] : [0.3, 0.55, 0.3]
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
           className={`absolute -top-32 -left-32 w-[42vw] h-[42vw] rounded-full filter blur-[110px] ${
-            isEmeraldGold ? 'bg-[#c1912a]/35' : isDark ? 'bg-blue-600/40' : 'bg-blue-300/60'
+            isEmeraldGold ? 'bg-[#c1912a]/35' : isDark ? 'bg-[#0d4933]/50' : 'bg-[#629176]/40'
           }`} 
         />
 
-        {/* Animated Light Orb 2 - Deep Emerald / Purple */}
+        {/* Animated Light Orb 2 - Deep Emerald */}
         <motion.div 
           animate={{ 
             scale: [1, 1.35, 1],
             x: [0, -50, 0],
             y: [0, 50, 0],
-            opacity: isEmeraldGold ? [0.4, 0.65, 0.4] : isDark ? [0.2, 0.4, 0.2] : [0.3, 0.55, 0.3]
+            opacity: isEmeraldGold ? [0.4, 0.65, 0.4] : isDark ? [0.25, 0.5, 0.25] : [0.25, 0.5, 0.25]
           }}
           transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className={`absolute -bottom-32 -right-32 w-[48vw] h-[48vw] rounded-full filter blur-[130px] ${
-            isEmeraldGold ? 'bg-[#0d4933]/80' : isDark ? 'bg-purple-600/35' : 'bg-purple-300/50'
+            isEmeraldGold ? 'bg-[#0d4933]/80' : isDark ? 'bg-[#042821]/80' : 'bg-[#0d4933]/30'
           }`} 
         />
 
-        {/* Animated Light Orb 3 - Sage Green / Cyan */}
+        {/* Animated Light Orb 3 - Sage Mist */}
         <motion.div 
           animate={{ 
             scale: [1, 1.2, 1],
             x: [0, 30, 0],
             y: [0, 40, 0],
-            opacity: isEmeraldGold ? [0.25, 0.45, 0.25] : isDark ? [0.15, 0.3, 0.15] : [0.25, 0.45, 0.25]
+            opacity: isEmeraldGold ? [0.25, 0.45, 0.25] : isDark ? [0.15, 0.3, 0.15] : [0.2, 0.4, 0.2]
           }}
           transition={{ duration: 16, repeat: Infinity, ease: "easeInOut", delay: 4 }}
           className={`absolute top-1/3 left-2/3 w-[34vw] h-[34vw] rounded-full filter blur-[95px] ${
-            isEmeraldGold ? 'bg-[#629176]/45' : isDark ? 'bg-cyan-500/25' : 'bg-pink-300/45'
+            isEmeraldGold ? 'bg-[#629176]/45' : isDark ? 'bg-[#629176]/25' : 'bg-[#629176]/30'
           }`} 
         />
 

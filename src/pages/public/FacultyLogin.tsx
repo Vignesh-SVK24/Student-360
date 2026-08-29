@@ -30,17 +30,17 @@ export default function FacultyLogin() {
 
         <div className="w-full max-w-4xl grid lg:grid-cols-12 rounded-3xl overflow-hidden bg-slate-900/60 backdrop-blur-2xl border border-white/10 shadow-[0_20px_70px_rgba(0,0,0,0.6)]">
           {/* Left Visual Column */}
-          <div className="lg:col-span-5 bg-gradient-to-br from-blue-900/40 via-slate-900/80 to-slate-950 p-8 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="lg:col-span-5 bg-gradient-to-br from-[#042821] via-[#0d4933]/60 to-slate-950 p-8 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#629176]/20 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <div className="w-10 h-10 rounded-xl bg-[#0d4933]/50 border border-[#629176]/40 flex items-center justify-center text-[#629176]">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
                   <span className="font-extrabold text-white text-lg tracking-tight block leading-tight">Student 360</span>
-                  <span className="text-[11px] text-blue-400 font-bold uppercase tracking-wider">Faculty Portal</span>
+                  <span className="text-[11px] text-[#629176] font-bold uppercase tracking-wider">Faculty Portal</span>
                 </div>
               </div>
 
@@ -58,7 +58,7 @@ export default function FacultyLogin() {
                   "Verified faculty feedback entries",
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-2.5 text-xs text-slate-300 font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#629176] shrink-0" />
                     <span>{item}</span>
                   </div>
                 ))}
@@ -67,7 +67,7 @@ export default function FacultyLogin() {
 
             <div className="relative z-10 mt-8 pt-6 border-t border-white/10">
               <div className="flex items-center gap-2 text-xs text-slate-400">
-                <ShieldCheck className="w-4 h-4 text-blue-400" />
+                <ShieldCheck className="w-4 h-4 text-[#629176]" />
                 <span>Protected by Institutional SSO Verification</span>
               </div>
             </div>
@@ -94,7 +94,7 @@ export default function FacultyLogin() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-blue-500 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-[#629176] text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#629176]/25 transition-all font-medium"
                     placeholder="prof.sarah@college.edu"
                   />
                 </div>
@@ -113,7 +113,7 @@ export default function FacultyLogin() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-10 pr-11 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-blue-500 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                    className="w-full pl-10 pr-11 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-[#629176] text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#629176]/25 transition-all font-medium"
                     placeholder="••••••••"
                   />
                   <button
@@ -126,14 +126,14 @@ export default function FacultyLogin() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-[#0d4933]/30 border border-[#629176]/30 text-xs text-[#629176] flex items-center justify-between">
                 <span>Demo Faculty Login Ready</span>
-                <span className="font-semibold text-blue-200">Pre-filled</span>
+                <span className="font-semibold text-emerald-200">Pre-filled</span>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white font-bold text-sm shadow-lg shadow-[#0d4933]/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <span>Access Faculty Dashboard</span>
                 <ArrowRight className="w-4 h-4" />

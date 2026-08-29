@@ -33,7 +33,7 @@ export default function Skills() {
   });
 
   const categories: { name: SkillCategory; icon: any; color: string; bg: string }[] = [
-    { name: "Programming", icon: Code2, color: "text-blue-600", bg: "bg-blue-50" },
+    { name: "Programming", icon: Code2, color: "text-[#0d4933]", bg: "bg-[#629176]/15" },
     { name: "Technical", icon: Layers, color: "text-purple-600", bg: "bg-purple-50" },
     { name: "Tools", icon: Wrench, color: "text-amber-600", bg: "bg-amber-50" },
     { name: "Soft Skills", icon: Users2, color: "text-emerald-600", bg: "bg-emerald-50" }
@@ -93,7 +93,7 @@ export default function Skills() {
       case "Expert":
         return "bg-purple-100 text-purple-800 border-purple-200";
       case "Advanced":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-[#629176]/20 text-[#0d4933] border-[#629176]/40";
       case "Intermediate":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "Beginner":
@@ -107,7 +107,7 @@ export default function Skills() {
       subtitle="Proficiencies across technical, tooling & leadership disciplines"
       showBack={true}
       actions={
-        <GlassButton onClick={() => handleOpenAdd()} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs cursor-pointer">
+        <GlassButton onClick={() => handleOpenAdd()} className="gap-2 bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white text-xs shadow-md shadow-[#0d4933]/25 cursor-pointer">
           <Plus className="w-4 h-4" /> Add Skill
         </GlassButton>
       }
@@ -162,7 +162,7 @@ export default function Skills() {
                   {filtered.map((skill) => (
                     <div
                       key={skill.id}
-                      className="p-4 rounded-2xl border border-slate-200/70 hover:border-indigo-300 hover:shadow-md transition-all flex items-center justify-between group bg-slate-50/30"
+                      className="p-4 rounded-2xl border border-slate-200/70 hover:border-[#629176]/50 hover:shadow-md transition-all flex items-center justify-between group bg-slate-50/30"
                     >
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 mb-1">{skill.name}</h4>
@@ -174,7 +174,7 @@ export default function Skills() {
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleOpenEdit(skill)}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-[#0d4933] hover:bg-[#629176]/15 rounded-lg transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -213,7 +213,7 @@ export default function Skills() {
             <select
               value={formData.category}
               onChange={(e: any) => setFormData({ ...formData, category: e.target.value as SkillCategory })}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#629176]/25 focus:border-[#0d4933]"
             >
               <option value="Programming">Programming</option>
               <option value="Technical">Technical</option>
@@ -227,7 +227,7 @@ export default function Skills() {
             <select
               value={formData.proficiency}
               onChange={(e: any) => setFormData({ ...formData, proficiency: e.target.value as SkillProficiency })}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#629176]/25 focus:border-[#0d4933]"
             >
               <option value="Beginner">Beginner</option>
               <option value="Intermediate">Intermediate</option>
@@ -247,7 +247,7 @@ export default function Skills() {
             </GlassButton>
             <GlassButton
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+              className="w-full bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white shadow-md shadow-[#0d4933]/30 cursor-pointer"
             >
               {editingId ? "Update Skill" : "Save Skill"}
             </GlassButton>

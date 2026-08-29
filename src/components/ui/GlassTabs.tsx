@@ -23,7 +23,7 @@ export function GlassTabs({ tabs, activeTab, onChange, className = '' }: GlassTa
             onClick={() => onChange(tab.id)}
             className={`
               relative px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap
-              ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}
+              ${isActive ? 'text-[#0d4933] font-bold dark:text-[#629176]' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}
             `}
           >
             {isActive && (

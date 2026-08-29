@@ -21,7 +21,7 @@ export default function StudentForgotPassword() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative">
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-100 rounded-full blur-3xl opacity-50"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#629176]/15 rounded-full blur-3xl opacity-50"></div>
 
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
