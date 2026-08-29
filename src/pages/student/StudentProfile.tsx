@@ -33,6 +33,7 @@ export default function StudentProfile() {
   // Edit form state
   const [formData, setFormData] = useState({
     name: student.name,
+    registerNumber: student.registerNumber,
     email: student.personal.email,
     phone: student.personal.phone,
     address: student.personal.address,
@@ -49,6 +50,7 @@ export default function StudentProfile() {
   const handleOpenEdit = () => {
     setFormData({
       name: student.name,
+      registerNumber: student.registerNumber,
       email: student.personal.email,
       phone: student.personal.phone,
       address: student.personal.address,
@@ -66,6 +68,12 @@ export default function StudentProfile() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.name !== student.name || formData.registerNumber !== student.registerNumber) {
+      await studentService.updateAccountDetails({
+        name: formData.name,
+        registerNumber: formData.registerNumber
+      });
+    }
     await studentService.updatePersonal({
       email: formData.email,
       phone: formData.phone,
@@ -389,8 +397,29 @@ export default function StudentProfile() {
         title="Edit Profile Information"
       >
         <form onSubmit={handleSaveProfile} className="space-y-6">
+          {/* Student Identity & Academic Credentials */}
+          <div className="space-y-4 p-4 rounded-2xl bg-[#629176]/10 border border-[#629176]/30">
+            <h4 className="text-xs font-bold text-[#0d4933] uppercase tracking-wider flex items-center gap-1.5">
+              <span>Student Identity & Credentials</span>
+            </h4>
+            <GlassInput
+              label="Full Student Name"
+              required
+              value={formData.name}
+              onChange={(e: any) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g. Arun Kumar"
+            />
+            <GlassInput
+              label="Register Number"
+              required
+              value={formData.registerNumber}
+              onChange={(e: any) => setFormData({ ...formData, registerNumber: e.target.value.toUpperCase() })}
+              placeholder="e.g. 23AIM001"
+            />
+          </div>
+
           <div className="space-y-4">
-            <h4 className="text-xs font-bold text-purple-600 uppercase tracking-wider">Contact & Address</h4>
+            <h4 className="text-xs font-bold text-[#0d4933] uppercase tracking-wider">Contact & Address</h4>
             <GlassInput
               label="Email Address"
               type="email"

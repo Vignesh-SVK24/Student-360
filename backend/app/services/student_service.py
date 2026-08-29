@@ -177,15 +177,35 @@ class StudentService:
 
     def update(self, student_id: int, data: StudentUpdate) -> Student:
         student = self.get_by_id(student_id)
-        old_data = {"full_name": student.full_name, "email": student.email, "semester": student.semester}
+        old_data = {
+            "register_number": student.register_number,
+            "full_name": student.full_name,
+            "email": student.email,
+            "semester": student.semester,
+        }
+
+        update_dict = data.model_dump(exclude_unset=True)
+
+        if data.register_number and data.register_number.strip():
+            new_reg = validate_register_number(data.register_number)
+            if new_reg != student.register_number:
+                existing_reg = self.repo.get_by_register_number(new_reg)
+                if existing_reg and existing_reg.id != student_id:
+                    raise ConflictException(f"Register number '{new_reg}' is already in use by another student", "DUPLICATE_REGISTER_NUMBER")
+                update_dict["register_number"] = new_reg
 
         if data.email and data.email != student.email:
             existing = self.repo.get_by_email(str(data.email))
             if existing and existing.id != student_id:
                 raise ConflictException(f"Email '{data.email}' is already in use", "DUPLICATE_EMAIL")
 
-        update_dict = data.model_dump(exclude_unset=True)
-        if "first_name" in update_dict or "last_name" in update_dict:
+        if "full_name" in update_dict and update_dict["full_name"]:
+            cleaned_full = update_dict["full_name"].strip()
+            parts = cleaned_full.split(" ", 1)
+            update_dict["first_name"] = parts[0]
+            update_dict["last_name"] = parts[1] if len(parts) > 1 else ""
+            update_dict["full_name"] = cleaned_full
+        elif "first_name" in update_dict or "last_name" in update_dict:
             fn = update_dict.get("first_name", student.first_name)
             ln = update_dict.get("last_name", student.last_name)
             update_dict["full_name"] = f"{fn} {ln}".strip()

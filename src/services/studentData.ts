@@ -293,6 +293,14 @@ export const studentService = {
     localStorage.setItem("edumanage_student_session", JSON.stringify(current));
     activeStudent = current;
     return Promise.resolve(current);
+  },
+  updateAccountDetails: async (data: { name?: string; registerNumber?: string }): Promise<StudentFullProfile> => {
+    const current = studentAuthService.getCurrentStudent();
+    if (data.name && data.name.trim()) current.name = data.name.trim();
+    if (data.registerNumber && data.registerNumber.trim()) current.registerNumber = data.registerNumber.trim().toUpperCase();
+    localStorage.setItem("edumanage_student_session", JSON.stringify(current));
+    activeStudent = current;
+    return Promise.resolve(current);
   }
 };
 
