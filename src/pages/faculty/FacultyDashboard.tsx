@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Bell, Users, TrendingUp, Award, AlertCircle, Eye } from "lucide-react";
 import { mockStudents } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
+import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileDropdown";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
@@ -113,17 +114,7 @@ export default function FacultyDashboard() {
 
             <div className="h-6 w-px bg-slate-300/60 hidden sm:block"></div>
 
-            <div className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-white/80 transition-all cursor-pointer">
-              <img 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" 
-                alt="Faculty" 
-                className="w-9 h-9 rounded-xl object-cover ring-2 ring-blue-500/20" 
-              />
-              <div className="hidden md:block text-left text-xs pr-1">
-                <p className="font-bold text-slate-900 leading-tight">Dr. Sarah Jenkins</p>
-                <p className="text-slate-500 font-medium text-[11px]">Computer Science & AI</p>
-              </div>
-            </div>
+            <FacultyProfileDropdown />
           </div>
         </div>
       </header>

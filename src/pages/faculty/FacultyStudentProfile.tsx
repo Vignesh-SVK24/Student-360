@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, TrendingUp, User, ShieldCheck } from "lucide-react";
 import { mockStudents } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
+import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileDropdown";
 
 export default function FacultyStudentProfile() {
   const { studentId } = useParams();
@@ -48,9 +49,13 @@ export default function FacultyStudentProfile() {
             <span className="text-xs font-bold text-slate-500">Student 360 Dossier / <strong className="text-slate-900">{student.name}</strong></span>
           </div>
 
-          <span className="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
-            {student.registerNumber}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
+              {student.registerNumber}
+            </span>
+            <div className="h-6 w-px bg-slate-300/60 hidden sm:block"></div>
+            <FacultyProfileDropdown />
+          </div>
         </div>
       </header>
 
