@@ -1,11 +1,14 @@
 # 🎓 Student 360 — College Student Information Management & Portfolio System
 
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Website-Student_360-0d4933?style=for-the-badge&labelColor=c1912a)](https://vignesh-svk24.github.io/Student-360/)
 [![React](https://img.shields.io/badge/React-19-61dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-12-ff0055?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
 
+> 🌐 **Live Website Link**: [**https://vignesh-svk24.github.io/Student-360/**](https://vignesh-svk24.github.io/Student-360/)
+>
 > A modern, responsive, and glassmorphism-engineered **College Student Information Management & 360° Portfolio Intelligence System**. Bridges institutional faculty administration and student career self-advocacy through unified metrics, verified accomplishments, and liquid-smooth interactions.
 
 ---
