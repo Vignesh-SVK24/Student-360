@@ -79,7 +79,7 @@ export default function FacultyStudentProfile() {
 
   const tabs = [
     { id: "Overview", label: "Overview", icon: TrendingUp },
-    { id: "My Profile", label: "My Profile", icon: User },
+    { id: "Profile", label: "Profile", icon: User },
     { id: "Skills", label: "Skills", icon: Code2 },
     { id: "Achievements", label: "Achievements", icon: Trophy },
     { id: "Projects", label: "Projects", icon: Briefcase },
@@ -291,7 +291,7 @@ export default function FacultyStudentProfile() {
 
                 <div className="pt-3 border-t border-slate-100">
                   <button 
-                    onClick={() => setActiveTab("My Profile")} 
+                    onClick={() => setActiveTab("Profile")} 
                     className="w-full py-2.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white text-xs font-bold transition-colors cursor-pointer border border-purple-200"
                   >
                     Open Complete Student Profile
@@ -302,8 +302,8 @@ export default function FacultyStudentProfile() {
           </div>
         )}
 
-        {/* TAB 2: MY PROFILE (STUDENT PROFILE SECTION IN FACULTY PAGE) */}
-        {activeTab === "My Profile" && (
+        {/* TAB 2: PROFILE (STUDENT PROFILE SECTION IN FACULTY PAGE) */}
+        {activeTab === "Profile" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-5">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">

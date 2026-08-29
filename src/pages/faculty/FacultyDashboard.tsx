@@ -357,14 +357,14 @@ export default function FacultyDashboard() {
                     {/* Quick Profile + Full View 360 */}
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {/* My Profile Quick Preview Button */}
+                        {/* Profile Quick Preview Button */}
                         <button 
                           onClick={() => setSelectedQuickStudent(student)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl transition-all shadow-xs cursor-pointer border border-purple-200/70"
-                          title="Quick View My Profile Details"
+                          title="Quick View Profile Details"
                         >
                           <User className="w-3.5 h-3.5" />
-                          <span>My Profile</span>
+                          <span>Profile</span>
                         </button>
 
                         {/* View 360 Full Dossier */}
@@ -386,7 +386,7 @@ export default function FacultyDashboard() {
         </div>
       </main>
 
-      {/* Quick "My Profile" Preview Modal */}
+      {/* Quick "Profile" Preview Modal */}
       <AnimatePresence>
         {selectedQuickStudent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
