@@ -55,3 +55,72 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def faculty_headers(client, db_session):
+    from app.models.user import User
+    from app.models.faculty import Faculty
+    from app.core.constants import UserRole, AccountStatus
+    from app.security.password import hash_password
+    from app.security.jwt import create_access_token
+
+    user = User(
+        email="test.faculty@college.edu",
+        username="FAC-TEST-01",
+        password_hash=hash_password("Faculty@360"),
+        role=UserRole.FACULTY.value,
+        is_active=True,
+        status=AccountStatus.ACTIVE.value,
+    )
+    db_session.add(user)
+    db_session.flush()
+
+    faculty = Faculty(
+        user_id=user.id,
+        faculty_id="FAC-TEST-01",
+        name="Test Faculty",
+        email="test.faculty@college.edu",
+        designation="Professor",
+        active=True,
+    )
+    db_session.add(faculty)
+    db_session.commit()
+
+    token = create_access_token({"sub": str(user.id), "role": user.role, "email": user.email})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def student_headers(client, db_session):
+    from app.models.user import User
+    from app.models.student import Student
+    from app.core.constants import UserRole, AccountStatus
+    from app.security.password import hash_password
+    from app.security.jwt import create_access_token
+
+    user = User(
+        email="test.student@college.edu",
+        username="23TESTSTUD",
+        password_hash=hash_password("Student@360"),
+        role=UserRole.STUDENT.value,
+        is_active=True,
+        status=AccountStatus.ACTIVE.value,
+    )
+    db_session.add(user)
+    db_session.flush()
+
+    student = Student(
+        user_id=user.id,
+        register_number="23TESTSTUD",
+        first_name="Test",
+        last_name="Student",
+        full_name="Test Student",
+        email="test.student@college.edu",
+        active=True,
+    )
+    db_session.add(student)
+    db_session.commit()
+
+    token = create_access_token({"sub": str(user.id), "role": user.role, "email": user.email})
+    return {"Authorization": f"Bearer {token}"}

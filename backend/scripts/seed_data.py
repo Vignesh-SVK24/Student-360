@@ -6,8 +6,10 @@ from datetime import date
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.core.database import SessionLocal, Base, engine
-from app.core.constants import StudentType, Gender, RemarkGrade, AssessmentType, SkillCategory, SkillProficiency
+from app.core.constants import StudentType, Gender, RemarkGrade, AssessmentType, SkillCategory, SkillProficiency, UserRole, AccountStatus
+from app.security.password import hash_password
 from app.models import (
+    User,
     Department,
     Course,
     Subject,
@@ -66,8 +68,30 @@ def seed_database():
         db.add_all([sub1, sub2, sub3, sub4, sub5])
         db.commit()
 
-        print("Seeding Faculty...")
+        print("Seeding Faculty & User Accounts...")
+        u_fac1 = User(
+            email="ramanujam.s@college.edu",
+            username="FAC-AIML-01",
+            password_hash=hash_password("Faculty@360"),
+            role=UserRole.FACULTY.value,
+            is_active=True,
+            is_verified=True,
+            status=AccountStatus.ACTIVE.value,
+        )
+        u_fac2 = User(
+            email="meenakshi.s@college.edu",
+            username="FAC-AIML-02",
+            password_hash=hash_password("Faculty@360"),
+            role=UserRole.FACULTY.value,
+            is_active=True,
+            is_verified=True,
+            status=AccountStatus.ACTIVE.value,
+        )
+        db.add_all([u_fac1, u_fac2])
+        db.flush()
+
         fac1 = Faculty(
+            user_id=u_fac1.id,
             faculty_id="FAC-AIML-01",
             name="Dr. S. Ramanujam",
             email="ramanujam.s@college.edu",
@@ -77,6 +101,7 @@ def seed_database():
             profile_photo_url="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
         )
         fac2 = Faculty(
+            user_id=u_fac2.id,
             faculty_id="FAC-AIML-02",
             name="Prof. Meenakshi Sundaram",
             email="meenakshi.s@college.edu",
@@ -239,11 +264,27 @@ def seed_database():
         ]
 
         for s_info in student_data:
+            # 1. Create Student User Account
+            u_stud = User(
+                email=s_info["email"],
+                username=s_info["reg"],
+                password_hash=hash_password("Student@360"),
+                role=UserRole.STUDENT.value,
+                is_active=True,
+                is_verified=True,
+                status=AccountStatus.ACTIVE.value,
+            )
+            db.add(u_stud)
+            db.flush()
+
+            # 2. Create Student Profile linked to User
             s = Student(
+                user_id=u_stud.id,
                 register_number=s_info["reg"],
                 first_name=s_info["fn"],
                 last_name=s_info["ln"],
                 full_name=f"{s_info['fn']} {s_info['ln']}",
+                display_name=f"{s_info['fn']} {s_info['ln']}",
                 email=s_info["email"],
                 phone_number=s_info["phone"],
                 date_of_birth=s_info["dob"],

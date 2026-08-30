@@ -8,6 +8,8 @@ class Faculty(Base, TimestampMixin):
     __tablename__ = "faculty"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True, index=True)
+
     faculty_id = Column(String(50), unique=True, index=True, nullable=False)
     name = Column(String(200), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
@@ -17,5 +19,6 @@ class Faculty(Base, TimestampMixin):
     profile_photo_url = Column(String(2048), nullable=True)
     active = Column(Boolean, default=True, nullable=False)
 
+    user = relationship("User", back_populates="faculty")
     department = relationship("Department", back_populates="faculty")
     remarks = relationship("FacultyRemark", back_populates="faculty")

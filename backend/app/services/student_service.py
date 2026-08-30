@@ -150,7 +150,7 @@ class StudentService:
             )
         return summaries, total
 
-    def create(self, data: StudentCreate) -> Student:
+    def create(self, data: StudentCreate, actor_id: str = "system", actor_type: str = AuditActorType.SYSTEM.value) -> Student:
         reg_no = validate_register_number(data.register_number)
         if self.repo.get_by_register_number(reg_no):
             raise ConflictException(f"Student with register number '{reg_no}' already exists", "DUPLICATE_REGISTER_NUMBER")
@@ -162,18 +162,164 @@ class StudentService:
         student_data["register_number"] = reg_no
         student_data["full_name"] = full_name
 
-        student = Student(**student_data)
-        saved = self.repo.create(student)
+        # Extract nested child payloads
+        from app.core.config import settings
+        from app.models.user import User
+        from app.models.guardian import Guardian
+        from app.models.academic import StudentAcademicBackground
+        from app.repositories.user_repository import UserRepository
+        from app.security.password import hash_password
+        from app.core.constants import UserRole, AccountStatus
+
+        initial_pw = student_data.pop("initial_password", None) or settings.DEFAULT_STUDENT_INITIAL_PASSWORD
+        p_name = student_data.pop("parent_name", None)
+        p_rel = student_data.pop("parent_relationship", "Father")
+        p_phone = student_data.pop("parent_phone", None)
+        p_email = student_data.pop("parent_email", None)
+        p_occ = student_data.pop("parent_occupation", None)
+
+        s_10th = student_data.pop("school_10th", None)
+        b_10th = student_data.pop("board_10th", None)
+        tm_10th = student_data.pop("total_marks_10th", None)
+        mm_10th = student_data.pop("maximum_marks_10th", None)
+        pct_10th = student_data.pop("percentage_10th", None)
+        yr_10th = student_data.pop("year_of_passing_10th", None)
+
+        s_12th = student_data.pop("school_12th", None)
+        b_12th = student_data.pop("board_12th", None)
+        tm_12th = student_data.pop("total_marks_12th", None)
+        mm_12th = student_data.pop("maximum_marks_12th", None)
+        pct_12th = student_data.pop("percentage_12th", None)
+        yr_12th = student_data.pop("year_of_passing_12th", None)
+
+        try:
+            # 1. Transactionally provision or link User account
+            user_repo = UserRepository(self.db)
+            existing_user = user_repo.get_by_email(str(data.email))
+            if existing_user:
+                user_id = existing_user.id
+            else:
+                user = User(
+                    email=str(data.email).strip().lower(),
+                    username=reg_no,
+                    password_hash=hash_password(initial_pw),
+                    role=UserRole.STUDENT.value,
+                    is_active=True,
+                    is_verified=True,
+                    status=AccountStatus.ACTIVE.value,
+                )
+                self.db.add(user)
+                self.db.flush()
+                user_id = user.id
+
+            student_data["user_id"] = user_id
+            student = Student(**student_data)
+            self.db.add(student)
+            self.db.flush()
+
+            # 2. Add Parent / Guardian if provided
+            if p_name:
+                guardian = Guardian(
+                    student_id=student.id,
+                    parent_name=p_name.strip(),
+                    relationship=p_rel or "Father",
+                    phone_number=p_phone or "+91 90000 00000",
+                    email=p_email,
+                    occupation=p_occ,
+                    is_primary_contact=True,
+                )
+                self.db.add(guardian)
+
+            # 3. Add Academic Background if provided
+            if s_10th or s_12th:
+                if tm_10th and mm_10th and mm_10th > 0 and not pct_10th:
+                    pct_10th = round((tm_10th / mm_10th) * 100, 2)
+                if tm_12th and mm_12th and mm_12th > 0 and not pct_12th:
+                    pct_12th = round((tm_12th / mm_12th) * 100, 2)
+                bg = StudentAcademicBackground(
+                    student_id=student.id,
+                    school_10th=s_10th,
+                    board_10th=b_10th,
+                    total_marks_10th=tm_10th,
+                    maximum_marks_10th=mm_10th,
+                    percentage_10th=pct_10th,
+                    year_of_passing_10th=yr_10th,
+                    school_12th=s_12th,
+                    board_12th=b_12th,
+                    total_marks_12th=tm_12th,
+                    maximum_marks_12th=mm_12th,
+                    percentage_12th=pct_12th,
+                    year_of_passing_12th=yr_12th,
+                )
+                self.db.add(bg)
+
+            self.db.commit()
+            self.db.refresh(student)
+
+            self.audit.log(
+                action=AuditAction.CREATE.value,
+                actor_type=actor_type,
+                actor_id=actor_id,
+                entity_type="Student",
+                entity_id=str(student.id),
+                new_data={"register_number": student.register_number, "full_name": student.full_name, "email": student.email},
+            )
+            return student
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def update_name(
+        self,
+        student_id: int,
+        first_name: Optional[str] = None,
+        middle_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        display_name: Optional[str] = None,
+        actor_id: str = "system",
+        actor_type: str = AuditActorType.STUDENT.value,
+    ) -> Student:
+        student = self.get_by_id(student_id)
+        old_data = {
+            "first_name": student.first_name,
+            "middle_name": student.middle_name,
+            "last_name": student.last_name,
+            "display_name": student.display_name,
+            "full_name": student.full_name,
+        }
+
+        if first_name and first_name.strip():
+            student.first_name = first_name.strip()
+        if middle_name is not None:
+            student.middle_name = middle_name.strip() if middle_name.strip() else None
+        if last_name and last_name.strip():
+            student.last_name = last_name.strip()
+
+        name_parts = [n for n in [student.first_name, student.middle_name, student.last_name] if n]
+        student.full_name = " ".join(name_parts)
+
+        if display_name is not None:
+            student.display_name = display_name.strip() if display_name.strip() else None
+
+        self.db.commit()
+        self.db.refresh(student)
 
         self.audit.log(
-            action=AuditAction.CREATE.value,
-            actor_type=AuditActorType.SYSTEM.value,
-            actor_id="system",
+            action="NAME_CHANGED",
+            actor_type=actor_type,
+            actor_id=actor_id,
             entity_type="Student",
-            entity_id=str(saved.id),
-            new_data={"register_number": saved.register_number, "full_name": saved.full_name},
+            entity_id=str(student.id),
+            old_data=old_data,
+            new_data={
+                "first_name": student.first_name,
+                "middle_name": student.middle_name,
+                "last_name": student.last_name,
+                "display_name": student.display_name,
+                "full_name": student.full_name,
+            },
         )
-        return saved
+        return student
 
     def update(self, student_id: int, data: StudentUpdate) -> Student:
         student = self.get_by_id(student_id)

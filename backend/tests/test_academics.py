@@ -1,8 +1,9 @@
-def test_academic_background_and_assessments(client):
+def test_academic_background_and_assessments(client, faculty_headers):
     # Create student
     s_res = client.post(
         "/api/v1/students",
         json={"register_number": "23ACAD001", "first_name": "Harini", "last_name": "S", "email": "harini.s@test.edu"},
+        headers=faculty_headers,
     )
     student_id = s_res.json()["data"]["id"]
 

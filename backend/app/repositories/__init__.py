@@ -1,4 +1,5 @@
 from app.repositories.base import BaseRepository
+from app.repositories.user_repository import UserRepository
 from app.repositories.student_repository import StudentRepository
 from app.repositories.academic_repository import AcademicRepository
 from app.repositories.attendance_repository import AttendanceRepository

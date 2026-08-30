@@ -66,8 +66,55 @@ def search_students(
     )
 
 
+from app.models.user import User
+from app.models.student import Student
+from app.core.constants import UserRole
+from app.dependencies.auth import get_current_user, get_current_student, require_role, verify_student_access
+from app.schemas.auth import StudentNameChangeRequest
+
+
+@router.get("/me", response_model=ApiResponse[StudentDetailResponse])
+def get_my_student_profile(
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db),
+):
+    """Retrieve comprehensive Student 360 dossier for the authenticated student."""
+    service = StudentService(db)
+    detail = service.get_detail(current_student.id)
+    return ApiResponse.success_response(
+        data=detail,
+        message="Authenticated student dossier retrieved successfully",
+    )
+
+
+@router.patch("/me/name", response_model=ApiResponse[StudentResponse])
+def update_my_name(
+    payload: StudentNameChangeRequest,
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db),
+):
+    """Controlled, auditable name update for the authenticated student."""
+    service = StudentService(db)
+    updated = service.update_name(
+        student_id=current_student.id,
+        first_name=payload.first_name,
+        middle_name=payload.middle_name,
+        last_name=payload.last_name,
+        display_name=payload.display_name,
+        actor_id=str(current_student.register_number),
+        actor_type=UserRole.STUDENT.value,
+    )
+    return ApiResponse.success_response(
+        data=StudentResponse.model_validate(updated),
+        message="Student name updated successfully",
+    )
+
+
 @router.get("/{student_id}", response_model=ApiResponse[StudentDetailResponse])
-def get_student_detail(student_id: int, db: Session = Depends(get_db)):
+def get_student_detail(
+    student_id: int,
+    db: Session = Depends(get_db),
+):
     """
     Retrieve comprehensive Student 360 dossier with all linked portfolios:
     guardians, academic background, semester records, attendance,
@@ -83,14 +130,22 @@ def get_student_detail(student_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=ApiResponse[StudentResponse], status_code=status.HTTP_201_CREATED)
-def create_student(data: StudentCreate, db: Session = Depends(get_db)):
-    """Create a new student record."""
+def create_student(
+    data: StudentCreate,
+    current_user: User = Depends(require_role([UserRole.FACULTY.value, UserRole.ADMIN.value])),
+    db: Session = Depends(get_db),
+):
+    """Create a new student profile and provision their User account transactionally (Faculty/Admin only)."""
     service = StudentService(db)
-    created = service.create(data)
-    return ApiResponse(
-        success=True,
-        message="Student registered successfully",
+    created = service.create(
+        data,
+        actor_id=str(current_user.email),
+        actor_type=current_user.role,
+    )
+    return ApiResponse.success_response(
         data=StudentResponse.model_validate(created),
+        message="Student registered and user account provisioned successfully",
+        status_code=status.HTTP_201_CREATED,
     )
 
 

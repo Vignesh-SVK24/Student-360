@@ -25,6 +25,21 @@ def list_faculty(
     )
 
 
+from app.models.faculty import Faculty
+from app.dependencies.auth import get_current_faculty
+
+
+@router.get("/me", response_model=ApiResponse[FacultyResponse])
+def get_my_faculty_profile(
+    current_faculty: Faculty = Depends(get_current_faculty),
+):
+    """Retrieve profile for the currently authenticated faculty member."""
+    return ApiResponse.success_response(
+        data=FacultyResponse.model_validate(current_faculty),
+        message="Authenticated faculty profile retrieved",
+    )
+
+
 @router.get("/{faculty_id}", response_model=ApiResponse[FacultyResponse])
 def get_faculty(faculty_id: int, db: Session = Depends(get_db)):
     """Get faculty profile by ID."""

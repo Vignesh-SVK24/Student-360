@@ -10,6 +10,10 @@ class ApiResponse(BaseModel, Generic[T]):
     data: Optional[T] = None
     error_code: Optional[str] = None
 
+    @classmethod
+    def success_response(cls, data: Optional[T] = None, message: str = "Operation successful", status_code: int = 200) -> "ApiResponse[T]":
+        return cls(success=True, message=message, data=data, error_code=None)
+
 
 class DeleteResponse(BaseModel):
     id: int

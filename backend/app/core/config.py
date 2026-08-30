@@ -40,7 +40,13 @@ class Settings(BaseSettings):
     DEFAULT_PASSING_PERCENTAGE: float = 50.0
 
     SECRET_KEY: str = "student360-dev-super-secret-key-change-in-production-360"
+    JWT_SECRET_KEY: str = "student360-jwt-secret-key-production-change-360"
+    JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_TOKEN_REMEMBER_DAYS: int = 30
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 30
+    DEFAULT_STUDENT_INITIAL_PASSWORD: str = "Student@360"
 
     model_config = SettingsConfigDict(
         env_file=".env",

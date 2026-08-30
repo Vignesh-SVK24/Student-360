@@ -10,7 +10,7 @@ export default function StudentLogin() {
   const { login } = useStudentAuth();
 
   const [identifier, setIdentifier] = useState("23AIM001");
-  const [password, setPassword] = useState("student123");
+  const [password, setPassword] = useState("Student@360");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function StudentLogin() {
     setLoading(true);
 
     try {
-      const res = await login(identifier, password);
+      const res = await login(identifier, password, rememberMe);
       if (res.success) {
         navigate("/student/dashboard");
       } else {

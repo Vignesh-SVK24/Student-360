@@ -1,4 +1,4 @@
-def test_create_and_get_student(client):
+def test_create_and_get_student(client, faculty_headers):
     payload = {
         "register_number": "23TEST001",
         "first_name": "Karthik",
@@ -11,7 +11,7 @@ def test_create_and_get_student(client):
         "student_type": "Day Scholar",
     }
     # 1. Create
-    res = client.post("/api/v1/students", json=payload)
+    res = client.post("/api/v1/students", json=payload, headers=faculty_headers)
     assert res.status_code == 201
     res_data = res.json()
     assert res_data["success"] is True
@@ -32,14 +32,14 @@ def test_create_and_get_student(client):
     assert patch_res.json()["data"]["section"] == "B"
 
 
-def test_duplicate_register_number_rejected(client):
+def test_duplicate_register_number_rejected(client, faculty_headers):
     payload = {
         "register_number": "23DUP001",
         "first_name": "John",
         "last_name": "Doe",
         "email": "john.doe@test.edu",
     }
-    res1 = client.post("/api/v1/students", json=payload)
+    res1 = client.post("/api/v1/students", json=payload, headers=faculty_headers)
     assert res1.status_code == 201
 
     # Second attempt with same register number
@@ -49,12 +49,12 @@ def test_duplicate_register_number_rejected(client):
         "last_name": "Doe",
         "email": "jane.doe@test.edu",
     }
-    res2 = client.post("/api/v1/students", json=payload2)
+    res2 = client.post("/api/v1/students", json=payload2, headers=faculty_headers)
     assert res2.status_code == 409
     assert res2.json()["error_code"] == "DUPLICATE_REGISTER_NUMBER"
 
 
-def test_search_students(client):
+def test_search_students(client, faculty_headers):
     client.post(
         "/api/v1/students",
         json={
@@ -63,6 +63,7 @@ def test_search_students(client):
             "last_name": "V",
             "email": "subbu.v@test.edu",
         },
+        headers=faculty_headers,
     )
 
     # Search by partial name

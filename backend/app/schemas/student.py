@@ -27,7 +27,30 @@ class StudentBase(BaseModel):
 
 
 class StudentCreate(StudentBase):
-    pass
+    initial_password: Optional[str] = None
+
+    # Optional Guardian Details on creation
+    parent_name: Optional[str] = None
+    parent_relationship: Optional[str] = "Father"
+    parent_phone: Optional[str] = None
+    parent_email: Optional[EmailStr] = None
+    parent_occupation: Optional[str] = None
+
+    # Optional 10th School Background
+    school_10th: Optional[str] = None
+    board_10th: Optional[str] = None
+    total_marks_10th: Optional[float] = None
+    maximum_marks_10th: Optional[float] = None
+    percentage_10th: Optional[float] = None
+    year_of_passing_10th: Optional[int] = None
+
+    # Optional 12th School Background
+    school_12th: Optional[str] = None
+    board_12th: Optional[str] = None
+    total_marks_12th: Optional[float] = None
+    maximum_marks_12th: Optional[float] = None
+    percentage_12th: Optional[float] = None
+    year_of_passing_12th: Optional[int] = None
 
 
 class StudentUpdate(BaseModel):

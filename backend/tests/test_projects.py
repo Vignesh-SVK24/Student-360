@@ -1,8 +1,9 @@
-def test_project_crud_and_technologies(client):
+def test_project_crud_and_technologies(client, faculty_headers):
     # Create student
     s_res = client.post(
         "/api/v1/students",
         json={"register_number": "23PRJ001", "first_name": "Deepa", "last_name": "V", "email": "deepa.v@test.edu"},
+        headers=faculty_headers,
     )
     student_id = s_res.json()["data"]["id"]
 

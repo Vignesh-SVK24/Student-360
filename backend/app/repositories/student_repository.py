@@ -18,6 +18,9 @@ class StudentRepository(BaseRepository[Student]):
         cleaned = email.strip().lower()
         return self.db.query(Student).filter(func.lower(Student.email) == cleaned).first()
 
+    def get_by_user_id(self, user_id: int) -> Optional[Student]:
+        return self.db.query(Student).filter(Student.user_id == user_id).first()
+
     def get_detail_by_id(self, student_id: int) -> Optional[Student]:
         return (
             self.db.query(Student)

@@ -67,3 +67,16 @@ class AuditActorType(str, Enum):
     FACULTY = "FACULTY"
     ADMIN = "ADMIN"
     SYSTEM = "SYSTEM"
+
+
+class UserRole(str, Enum):
+    STUDENT = "STUDENT"
+    FACULTY = "FACULTY"
+    ADMIN = "ADMIN"
+
+
+class AccountStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
+    PENDING = "PENDING"

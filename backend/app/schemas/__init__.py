@@ -1,4 +1,16 @@
 from app.schemas.common import ApiResponse, DeleteResponse
+from app.schemas.auth import (
+    StudentLoginRequest,
+    FacultyLoginRequest,
+    FacultyRegisterRequest,
+    RefreshTokenRequest,
+    AuthUserPayload,
+    AuthTokenResponse,
+    ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    StudentNameChangeRequest,
+)
 from app.schemas.department import DepartmentCreate, DepartmentUpdate, DepartmentResponse
 from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 from app.schemas.subject import SubjectCreate, SubjectUpdate, SubjectResponse

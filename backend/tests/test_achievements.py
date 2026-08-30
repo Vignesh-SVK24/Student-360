@@ -1,8 +1,9 @@
-def test_achievement_and_skill_crud(client):
+def test_achievement_and_skill_crud(client, faculty_headers):
     # Create student
     s_res = client.post(
         "/api/v1/students",
         json={"register_number": "23ACH001", "first_name": "Manoj", "last_name": "B", "email": "manoj.b@test.edu"},
+        headers=faculty_headers,
     )
     student_id = s_res.json()["data"]["id"]
 

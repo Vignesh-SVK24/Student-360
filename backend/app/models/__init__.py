@@ -1,4 +1,5 @@
 from app.models.base import TimestampMixin
+from app.models.user import User
 from app.models.department import Department
 from app.models.course import Course
 from app.models.subject import Subject
@@ -22,6 +23,7 @@ from app.models.audit_log import AuditLog
 
 __all__ = [
     "TimestampMixin",
+    "User",
     "Department",
     "Course",
     "Subject",

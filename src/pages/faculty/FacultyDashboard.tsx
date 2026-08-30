@@ -14,18 +14,57 @@ import {
   X, 
   ArrowRight,
   CheckCircle2,
-  Code2
+  Code2,
+  UserPlus
 } from "lucide-react";
 import { mockStudents, type Student } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
 import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileDropdown";
+import { AddStudentModal } from "../../components/faculty/AddStudentModal";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedQuickStudent, setSelectedQuickStudent] = useState<Student | null>(null);
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [studentsList, setStudentsList] = useState<Student[]>(() => {
+    const custom = localStorage.getItem("s360_custom_students");
+    if (custom) {
+      try {
+        const parsed = JSON.parse(custom);
+        return [...mockStudents, ...parsed];
+      } catch {
+        return mockStudents;
+      }
+    }
+    return mockStudents;
+  });
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const handleStudentAdded = (apiStudent: any) => {
+    const formatted: Student = {
+      id: apiStudent.id ? String(apiStudent.id) : `custom-${Date.now()}`,
+      name: apiStudent.full_name || `${apiStudent.first_name} ${apiStudent.last_name}`,
+      registerNumber: apiStudent.register_number,
+      department: "Artificial Intelligence & Data Science",
+      course: "B.Tech AI & Data Science",
+      year: apiStudent.year || "II",
+      section: apiStudent.section || "A",
+      cgpa: 8.00,
+      attendance: 100,
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+      skills: ["Python", "FastAPI", "Machine Learning"],
+      topAchievement: "Admitted via Faculty Portal",
+      email: apiStudent.email,
+      phone: apiStudent.phone_number,
+      residenceType: (apiStudent.student_type as any) || "Day Scholar",
+    };
+    setStudentsList((prev) => [formatted, ...prev]);
+    const custom = JSON.parse(localStorage.getItem("s360_custom_students") || "[]");
+    custom.unshift(formatted);
+    localStorage.setItem("s360_custom_students", JSON.stringify(custom));
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -41,7 +80,7 @@ export default function FacultyDashboard() {
 
   // Exact Match Check
   const exactMatch = queryClean
-    ? mockStudents.find(
+    ? studentsList.find(
         s =>
           s.registerNumber.toLowerCase() === queryClean ||
           s.name.toLowerCase() === queryClean
@@ -50,14 +89,14 @@ export default function FacultyDashboard() {
 
   // Incremental letter-by-letter suggestions
   const searchResults = queryClean
-    ? mockStudents.filter(s => 
+    ? studentsList.filter(s => 
         s.name.toLowerCase().includes(queryClean) || 
         s.registerNumber.toLowerCase().includes(queryClean) ||
         s.department.toLowerCase().includes(queryClean) ||
         s.course.toLowerCase().includes(queryClean) ||
         s.skills.some(sk => sk.toLowerCase().includes(queryClean))
       )
-    : mockStudents;
+    : studentsList;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,10 +255,17 @@ export default function FacultyDashboard() {
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Faculty Dashboard</h1>
             <p className="text-slate-500 font-medium text-sm mt-1">Institutional academic monitoring & student 360 evaluation</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
               Semester VI • Active Term
             </span>
+            <button
+              onClick={() => setIsAddStudentOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:opacity-95 text-white text-xs font-bold shadow-md shadow-[#0d4933]/25 transition-all cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Student</span>
+            </button>
           </div>
         </div>
 
@@ -257,18 +303,27 @@ export default function FacultyDashboard() {
             <div>
               <h2 className="text-lg font-bold text-slate-900">Student Directory & Portfolios</h2>
               <p className="text-xs text-slate-500 font-medium">
-                Showing {searchResults.length} of {mockStudents.length} students with verified skills & achievements
+                Showing {searchResults.length} of {studentsList.length} students with verified skills & achievements
               </p>
             </div>
 
-            {searchQuery && (
+            <div className="flex items-center gap-3">
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="self-start text-xs font-bold text-[#0d4933] hover:text-[#042821] bg-[#629176]/15 border border-[#629176]/30 px-3 py-1.5 rounded-xl transition-colors"
+                >
+                  Clear Search Filter
+                </button>
+              )}
               <button
-                onClick={() => setSearchQuery("")}
-                className="self-start text-xs font-bold text-[#0d4933] hover:text-[#042821] bg-[#629176]/15 border border-[#629176]/30 px-3 py-1.5 rounded-xl border border-[#629176]/30"
+                onClick={() => setIsAddStudentOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0d4933] hover:bg-[#042821] text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
               >
-                Clear Search Filter
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Add Student</span>
               </button>
-            )}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -516,6 +571,13 @@ export default function FacultyDashboard() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Add Student Modal */}
+      <AddStudentModal
+        isOpen={isAddStudentOpen}
+        onClose={() => setIsAddStudentOpen(false)}
+        onStudentAdded={handleStudentAdded}
+      />
     </AmbientBackground>
   );
 }

@@ -23,3 +23,11 @@ class FacultyRepository(BaseRepository[Faculty]):
             .filter(Faculty.email == email.strip().lower())
             .first()
         )
+
+    def get_by_user_id(self, user_id: int) -> Optional[Faculty]:
+        return (
+            self.db.query(Faculty)
+            .options(joinedload(Faculty.department))
+            .filter(Faculty.user_id == user_id)
+            .first()
+        )

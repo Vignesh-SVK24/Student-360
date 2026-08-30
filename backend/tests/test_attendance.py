@@ -1,8 +1,9 @@
-def test_attendance_workflow_and_validation(client):
+def test_attendance_workflow_and_validation(client, faculty_headers):
     # Create student
     s_res = client.post(
         "/api/v1/students",
         json={"register_number": "23ATT001", "first_name": "Ramesh", "last_name": "K", "email": "ramesh.k@test.edu"},
+        headers=faculty_headers,
     )
     student_id = s_res.json()["data"]["id"]
 
