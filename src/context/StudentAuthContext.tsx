@@ -7,6 +7,7 @@ interface StudentAuthContextType {
   student: StudentFullProfile;
   user: UserSession | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (identifier: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshStudent: () => void;
@@ -19,6 +20,7 @@ export const StudentAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [student, setStudent] = useState<StudentFullProfile>(studentAuthService.getCurrentStudent());
   const [user, setUser] = useState<UserSession | null>(tokenStorage.getUser());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!tokenStorage.getAccessToken());
+  const [isLoading, setIsLoading] = useState<boolean>(!!tokenStorage.getAccessToken());
 
   const refreshStudent = () => {
     setStudent(studentAuthService.getCurrentStudent());
@@ -28,18 +30,25 @@ export const StudentAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   useEffect(() => {
     const restoreSession = async () => {
       const token = tokenStorage.getAccessToken();
-      if (!token) return;
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
 
-      const res = await authApi.getMe();
-      if (res.success && res.data && res.data.role === "STUDENT") {
-        setUser(res.data);
-        setIsAuthenticated(true);
-        if (res.data.name) {
-          const current = studentAuthService.getCurrentStudent();
-          current.name = res.data.name;
-          if (res.data.identifier) current.registerNumber = res.data.identifier;
-          setStudent({ ...current });
+      try {
+        const res = await authApi.getMe();
+        if (res.success && res.data && res.data.role === "STUDENT") {
+          setUser(res.data);
+          setIsAuthenticated(true);
+          if (res.data.name) {
+            const current = studentAuthService.getCurrentStudent();
+            current.name = res.data.name;
+            if (res.data.identifier) current.registerNumber = res.data.identifier;
+            setStudent({ ...current });
+          }
         }
+      } finally {
+        setIsLoading(false);
       }
     };
     restoreSession();
@@ -99,7 +108,7 @@ export const StudentAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   return (
-    <StudentAuthContext.Provider value={{ student, user, isAuthenticated, login, logout, refreshStudent, updateName }}>
+    <StudentAuthContext.Provider value={{ student, user, isAuthenticated, isLoading, login, logout, refreshStudent, updateName }}>
       {children}
     </StudentAuthContext.Provider>
   );

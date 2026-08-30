@@ -25,6 +25,7 @@ interface FacultyAuthContextType {
   faculty: FacultyProfile;
   user: UserSession | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (identifier: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   register: (data: {
     name: string;
@@ -48,28 +49,36 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   });
   const [user, setUser] = useState<UserSession | null>(tokenStorage.getUser());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!tokenStorage.getAccessToken());
+  const [isLoading, setIsLoading] = useState<boolean>(!!tokenStorage.getAccessToken());
 
   // Restore authenticated session on reload
   useEffect(() => {
     const restoreSession = async () => {
       const token = tokenStorage.getAccessToken();
-      if (!token) return;
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
 
-      const res = await authApi.getMe();
-      if (res.success && res.data && (res.data.role === "FACULTY" || res.data.role === "ADMIN")) {
-        setUser(res.data);
-        setIsAuthenticated(true);
-        const updated: FacultyProfile = {
-          id: res.data.profile_id || 1,
-          facultyId: res.data.identifier || "FAC-AIML-01",
-          name: res.data.name || "Faculty Member",
-          email: res.data.email,
-          department: res.data.department_name || "Artificial Intelligence & Data Science",
-          designation: "Faculty Mentor",
-          profilePhoto: res.data.profile_photo_url || DEFAULT_FACULTY.profilePhoto,
-        };
-        setFaculty(updated);
-        localStorage.setItem("s360_faculty_profile", JSON.stringify(updated));
+      try {
+        const res = await authApi.getMe();
+        if (res.success && res.data && (res.data.role === "FACULTY" || res.data.role === "ADMIN")) {
+          setUser(res.data);
+          setIsAuthenticated(true);
+          const updated: FacultyProfile = {
+            id: res.data.profile_id || 1,
+            facultyId: res.data.identifier || "FAC-AIML-01",
+            name: res.data.name || "Faculty Member",
+            email: res.data.email,
+            department: res.data.department_name || "Artificial Intelligence & Data Science",
+            designation: "Faculty Mentor",
+            profilePhoto: res.data.profile_photo_url || DEFAULT_FACULTY.profilePhoto,
+          };
+          setFaculty(updated);
+          localStorage.setItem("s360_faculty_profile", JSON.stringify(updated));
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
     restoreSession();
@@ -137,7 +146,7 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   return (
-    <FacultyAuthContext.Provider value={{ faculty, user, isAuthenticated, login, register, logout }}>
+    <FacultyAuthContext.Provider value={{ faculty, user, isAuthenticated, isLoading, login, register, logout }}>
       {children}
     </FacultyAuthContext.Provider>
   );

@@ -1,13 +1,14 @@
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { StudentAuthProvider } from "./context/StudentAuthContext";
 import { FacultyAuthProvider } from "./context/FacultyAuthContext";
+import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 
 // Public Pages
 import Landing from "./pages/public/Landing";
 import FacultyLogin from "./pages/public/FacultyLogin";
 import StudentLogin from "./pages/public/StudentLogin";
 
-// Faculty Pages (Unchanged)
+// Faculty Pages
 import FacultyDashboard from "./pages/faculty/FacultyDashboard";
 import FacultyStudentProfile from "./pages/faculty/FacultyStudentProfile";
 
@@ -33,22 +34,99 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login/faculty" element={<FacultyLogin />} />
             <Route path="/login/student" element={<StudentLogin />} />
-
-            {/* Faculty Routes */}
-            <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
-            <Route path="/faculty/students/:studentId" element={<FacultyStudentProfile />} />
-
-            {/* Student Routes */}
             <Route path="/student/forgot-password" element={<StudentForgotPassword />} />
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/profile" element={<StudentProfile />} />
-            <Route path="/student/attendance" element={<StudentAttendance />} />
-            <Route path="/student/achievements" element={<Achievements />} />
-            <Route path="/student/skills" element={<Skills />} />
-            <Route path="/student/certificates" element={<Certificates />} />
-            <Route path="/student/projects" element={<Projects />} />
-            <Route path="/student/remarks" element={<Remarks />} />
-            <Route path="/student/settings" element={<StudentSettings />} />
+
+            {/* Protected Faculty Routes */}
+            <Route
+              path="/faculty/dashboard"
+              element={
+                <ProtectedRoute role="FACULTY">
+                  <FacultyDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/faculty/students/:studentId"
+              element={
+                <ProtectedRoute role="FACULTY">
+                  <FacultyStudentProfile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Student Routes */}
+            <Route
+              path="/student/dashboard"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/profile"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <StudentProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/attendance"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <StudentAttendance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/achievements"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <Achievements />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/skills"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <Skills />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/certificates"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <Certificates />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/projects"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <Projects />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/remarks"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <Remarks />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/settings"
+              element={
+                <ProtectedRoute role="STUDENT">
+                  <StudentSettings />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Router>
       </StudentAuthProvider>
