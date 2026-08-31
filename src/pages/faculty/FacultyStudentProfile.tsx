@@ -29,12 +29,14 @@ const GithubIcon = () => (
 import { mockStudents } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
 import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileDropdown";
+import { TimetableModal } from "../../components/faculty/TimetableModal";
 
 export default function FacultyStudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const student = mockStudents.find(s => s.id === studentId);
   const [activeTab, setActiveTab] = useState("Overview");
+  const [isTimetableOpen, setIsTimetableOpen] = useState(false);
 
   const [remarksList, setRemarksList] = useState([
     {
@@ -134,6 +136,16 @@ export default function FacultyStudentProfile() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsTimetableOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#0d4933]/20"
+              title="Open Weekly Time Table to Mark Period Attendance"
+            >
+              <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Time Table</span>
+            </button>
+
             <span className="text-xs font-bold px-3 py-1 rounded-xl bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
               {student.registerNumber}
             </span>
@@ -610,7 +622,16 @@ export default function FacultyStudentProfile() {
                 <p className="text-xs text-slate-500 mt-0.5">Statutory regulatory minimum requirement: 75% attendance</p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsTimetableOpen(true)}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0d4933] hover:bg-[#042821] text-white flex items-center gap-1.5 shadow-sm shadow-[#0d4933]/25 transition-colors cursor-pointer"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Time Table</span>
+                </button>
+
                 <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
                   student.attendance < 75 ? "bg-red-50 text-red-600 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 }`}>
@@ -754,6 +775,13 @@ export default function FacultyStudentProfile() {
           </div>
         )}
       </main>
+
+      {/* Weekly Time Table & Period Attendance Modal */}
+      <TimetableModal
+        isOpen={isTimetableOpen}
+        onClose={() => setIsTimetableOpen(false)}
+        studentsList={mockStudents}
+      />
     </AmbientBackground>
   );
 }

@@ -244,6 +244,17 @@ export default function FacultyDashboard() {
 
           {/* Right Profile & Notifications */}
           <div className="flex items-center gap-3">
+            {/* Top Navbar Time Table Button */}
+            <button
+              type="button"
+              onClick={() => setIsTimetableOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#0d4933]/25"
+              title="Open Time Table & Take Attendance"
+            >
+              <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Time Table</span>
+            </button>
+
             <button className="w-10 h-10 rounded-xl bg-white/60 hover:bg-white text-slate-600 hover:text-slate-900 flex items-center justify-center transition-all border border-white/60 shadow-sm relative cursor-pointer">
               <Bell className="w-4 h-4" />
               <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#0d4933]"></span>
@@ -263,15 +274,28 @@ export default function FacultyDashboard() {
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Faculty Dashboard</h1>
             <p className="text-slate-500 font-medium text-sm mt-1">Institutional academic monitoring & student 360 evaluation</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
               Semester VI • Active Term
             </span>
+
+            {/* Prominent Header Time Table Button */}
             <button
-              onClick={() => setIsAddStudentOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:opacity-95 text-white text-xs font-bold shadow-md shadow-[#0d4933]/25 transition-all cursor-pointer"
+              type="button"
+              onClick={() => setIsTimetableOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:opacity-95 text-white text-xs font-extrabold shadow-lg shadow-[#0d4933]/30 transition-all cursor-pointer ring-2 ring-emerald-400/30"
+              title="Open Time Table to Mark Student Attendance"
             >
-              <UserPlus className="w-4 h-4" />
+              <Calendar className="w-4 h-4 text-emerald-300" />
+              <span>Time Table</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAddStudentOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold shadow-sm transition-all cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4 text-[#0d4933]" />
               <span>Add Student</span>
             </button>
           </div>
@@ -301,6 +325,17 @@ export default function FacultyDashboard() {
               </div>
               <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</p>
               <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{stat.value}</h3>
+              {i === 1 && (
+                <button
+                  type="button"
+                  onClick={() => setIsTimetableOpen(true)}
+                  className="mt-3 text-[11px] font-bold text-[#0d4933] hover:text-[#042821] flex items-center gap-1 cursor-pointer group"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="group-hover:underline">Take Attendance via Time Table</span>
+                  <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              )}
             </div>
           ))}
         </div>

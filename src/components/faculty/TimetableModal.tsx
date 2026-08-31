@@ -218,18 +218,20 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
               slots.map((slot) => (
                 <div
                   key={slot.id}
-                  className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-emerald-300/80 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                  onClick={() => openAttendanceForSlot(slot)}
+                  className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#0d4933] hover:ring-2 hover:ring-[#0d4933]/15 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group cursor-pointer"
+                  title="Click to select this period and mark student attendance"
                 >
                   {/* Period Badge & Timings */}
-                  <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-[#629176]/15 text-[#0d4933] font-black flex flex-col items-center justify-center border border-[#629176]/30 shrink-0 shadow-xs">
+                  <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                    <div className="w-12 h-12 rounded-2xl bg-[#629176]/15 text-[#0d4933] font-black flex flex-col items-center justify-center border border-[#629176]/30 shrink-0 shadow-xs group-hover:scale-105 transition-transform">
                       <span className="text-[10px] uppercase tracking-wider font-bold">P</span>
                       <span className="text-base leading-none">{slot.period_number}</span>
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-extrabold text-sm text-slate-900 leading-tight">
+                        <h4 className="font-extrabold text-sm text-slate-900 leading-tight group-hover:text-[#0d4933] transition-colors">
                           {slot.subject_name}
                         </h4>
                         {slot.subject_code && (
@@ -237,6 +239,9 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                             {slot.subject_code}
                           </span>
                         )}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 opacity-80 group-hover:opacity-100 transition-opacity">
+                          Click to Mark
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-4 text-xs text-slate-500 mt-1 flex-wrap font-medium">
@@ -262,7 +267,10 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                   </div>
 
                   {/* Actions: Edit Subject/Time & Take Attendance */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <div 
+                    className="flex items-center gap-2 shrink-0 self-end sm:self-center"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       onClick={() => handleOpenEditSlot(slot)}
