@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -8,7 +7,6 @@ from app.core.exceptions import (
     UnauthorizedException,
     ConflictException,
     ValidationException,
-    NotFoundException,
 )
 from app.models.user import User
 from app.models.faculty import Faculty
@@ -23,6 +21,7 @@ from app.security.jwt import (
     decode_token,
     create_password_reset_token,
 )
+from app.utils.validators import validate_password_confirmation
 from app.schemas.auth import (
     StudentLoginRequest,
     FacultyLoginRequest,
@@ -83,6 +82,20 @@ class AuthService:
             is_active=user.is_active,
         )
 
+    def _create_token_response(self, user: User, remember_me: bool = False) -> AuthTokenResponse:
+        """Centralized factory for generating JWT auth token bundles and user session payload."""
+        user_payload = self._build_user_payload(user)
+        token_data = {"sub": str(user.id), "role": user.role, "email": user.email}
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data, remember_me=remember_me)
+
+        return AuthTokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=user_payload,
+        )
+
     def login_student(self, payload: StudentLoginRequest) -> AuthTokenResponse:
         cleaned = payload.identifier.strip()
         # 1. Search student by register number or email
@@ -127,17 +140,7 @@ class AuthService:
             entity_id=str(user.id),
         )
 
-        user_payload = self._build_user_payload(user)
-        token_data = {"sub": str(user.id), "role": user.role, "email": user.email}
-        access_token = create_access_token(token_data)
-        refresh_token = create_refresh_token(token_data, remember_me=payload.remember_me)
-
-        return AuthTokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=user_payload,
-        )
+        return self._create_token_response(user, remember_me=payload.remember_me)
 
     def login_faculty(self, payload: FacultyLoginRequest) -> AuthTokenResponse:
         cleaned = payload.identifier.strip()
@@ -179,24 +182,10 @@ class AuthService:
             entity_id=str(user.id),
         )
 
-        user_payload = self._build_user_payload(user)
-        token_data = {"sub": str(user.id), "role": user.role, "email": user.email}
-        access_token = create_access_token(token_data)
-        refresh_token = create_refresh_token(token_data, remember_me=payload.remember_me)
-
-        return AuthTokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=user_payload,
-        )
+        return self._create_token_response(user, remember_me=payload.remember_me)
 
     def register_faculty(self, payload: FacultyRegisterRequest) -> AuthTokenResponse:
-        if payload.password != payload.confirm_password:
-            raise ValidationException("Passwords do not match", "PASSWORDS_DO_NOT_MATCH")
-
-        if len(payload.password) < 6:
-            raise ValidationException("Password must be at least 6 characters long", "WEAK_PASSWORD")
+        validate_password_confirmation(payload.password, payload.confirm_password, min_length=6)
 
         # Check existing email
         if self.user_repo.get_by_email(payload.email) or self.faculty_repo.get_by_email(payload.email):
@@ -245,17 +234,7 @@ class AuthService:
                 new_data={"email": faculty.email, "faculty_id": faculty.faculty_id},
             )
 
-            user_payload = self._build_user_payload(user)
-            token_data = {"sub": str(user.id), "role": user.role, "email": user.email}
-            access_token = create_access_token(token_data)
-            refresh_token = create_refresh_token(token_data, remember_me=False)
-
-            return AuthTokenResponse(
-                access_token=access_token,
-                refresh_token=refresh_token,
-                expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-                user=user_payload,
-            )
+            return self._create_token_response(user, remember_me=False)
         except Exception:
             self.db.rollback()
             raise
@@ -271,27 +250,13 @@ class AuthService:
             raise UnauthorizedException("User account inactive or not found", "USER_INACTIVE")
 
         remember_me = decoded.get("remember_me", False)
-        user_payload = self._build_user_payload(user)
-        token_data = {"sub": str(user.id), "role": user.role, "email": user.email}
-        new_access = create_access_token(token_data)
-        new_refresh = create_refresh_token(token_data, remember_me=remember_me)
-
-        return AuthTokenResponse(
-            access_token=new_access,
-            refresh_token=new_refresh,
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=user_payload,
-        )
+        return self._create_token_response(user, remember_me=remember_me)
 
     def change_password(self, user: User, payload: ChangePasswordRequest) -> bool:
         if not verify_password(payload.current_password, user.password_hash):
             raise ValidationException("Current password does not match", "INCORRECT_CURRENT_PASSWORD")
 
-        if payload.new_password != payload.confirm_password:
-            raise ValidationException("New passwords do not match", "PASSWORDS_DO_NOT_MATCH")
-
-        if len(payload.new_password) < 6:
-            raise ValidationException("New password must be at least 6 characters long", "WEAK_PASSWORD")
+        validate_password_confirmation(payload.new_password, payload.confirm_password, min_length=6)
 
         user.password_hash = hash_password(payload.new_password)
         self.db.commit()
@@ -321,11 +286,7 @@ class AuthService:
         }
 
     def reset_password(self, payload: ResetPasswordRequest) -> bool:
-        if payload.new_password != payload.confirm_password:
-            raise ValidationException("Passwords do not match", "PASSWORDS_DO_NOT_MATCH")
-
-        if len(payload.new_password) < 6:
-            raise ValidationException("New password must be at least 6 characters long", "WEAK_PASSWORD")
+        validate_password_confirmation(payload.new_password, payload.confirm_password, min_length=6)
 
         decoded = decode_token(payload.token, expected_type="reset")
         email = decoded.get("sub")

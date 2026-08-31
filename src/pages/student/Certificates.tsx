@@ -4,7 +4,6 @@ import {
   Plus,
   Eye,
   Trash2,
-  Check,
   ExternalLink,
   Calendar,
   ShieldCheck,
@@ -15,17 +14,19 @@ import { GlassDrawer } from '../../components/ui/GlassDrawer';
 import { GlassModal } from '../../components/ui/GlassModal';
 import { GlassInput } from '../../components/ui/GlassInput';
 import { GlassButton } from '../../components/ui/GlassButton';
+import { Toast } from "../../components/ui/Toast";
+import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
 import { certificateService } from "../../services/studentData";
 import type { CertificateItem } from "../../types/student";
 
 export default function Certificates() {
   const { student, refreshStudent } = useStudentAuth();
+  const { toastMessage, showToast } = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewCert, setViewCert] = useState<CertificateItem | null>(null);
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -35,11 +36,6 @@ export default function Certificates() {
     credentialUrl: "",
     thumbnail: ""
   });
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   const handleOpenAdd = () => {
     setFormData({
@@ -90,12 +86,7 @@ export default function Certificates() {
         </GlassButton>
       }
     >
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-sm font-semibold border border-slate-700">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} />
 
       {student.certificates.length === 0 ? (
         <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/60 max-w-xl mx-auto space-y-4">

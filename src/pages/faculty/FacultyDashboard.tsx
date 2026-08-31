@@ -15,12 +15,16 @@ import {
   ArrowRight,
   CheckCircle2,
   Code2,
-  UserPlus
+  UserPlus,
+  Calendar,
+  KeyRound
 } from "lucide-react";
 import { mockStudents, type Student } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
 import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileDropdown";
 import { AddStudentModal } from "../../components/faculty/AddStudentModal";
+import { TimetableModal } from "../../components/faculty/TimetableModal";
+import { GrantAccessModal } from "../../components/faculty/GrantAccessModal";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
@@ -28,6 +32,10 @@ export default function FacultyDashboard() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedQuickStudent, setSelectedQuickStudent] = useState<Student | null>(null);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [isTimetableOpen, setIsTimetableOpen] = useState(false);
+  const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+  const [selectedAccessStudent, setSelectedAccessStudent] = useState<Student | null>(null);
+  const [dashboardToast, setDashboardToast] = useState<string | null>(null);
   const [studentsList, setStudentsList] = useState<Student[]>(() => {
     const custom = localStorage.getItem("s360_custom_students");
     if (custom) {
@@ -317,6 +325,15 @@ export default function FacultyDashboard() {
                 </button>
               )}
               <button
+                onClick={() => setIsTimetableOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#0d4933]/25"
+                title="Open Weekly 6-Day Time Table and mark period attendance"
+              >
+                <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Time Table</span>
+              </button>
+
+              <button
                 onClick={() => setIsAddStudentOpen(true)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0d4933] hover:bg-[#042821] text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
               >
@@ -420,6 +437,19 @@ export default function FacultyDashboard() {
                         >
                           <User className="w-3.5 h-3.5" />
                           <span>Profile</span>
+                        </button>
+
+                        {/* Feature 1: Grant Access / Credentials Button */}
+                        <button 
+                          onClick={() => {
+                            setSelectedAccessStudent(student);
+                            setIsAccessModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-xl transition-all shadow-xs cursor-pointer border border-emerald-200/70"
+                          title="Grant or Manage Student Portal Access & Credentials"
+                        >
+                          <KeyRound className="w-3.5 h-3.5" />
+                          <span>Access</span>
                         </button>
 
                         {/* View 360 Full Dossier */}
@@ -578,6 +608,43 @@ export default function FacultyDashboard() {
         onClose={() => setIsAddStudentOpen(false)}
         onStudentAdded={handleStudentAdded}
       />
+
+      {/* Feature 2 & 3: Weekly 6-Day Time Table & Period Attendance Modal */}
+      <TimetableModal
+        isOpen={isTimetableOpen}
+        onClose={() => setIsTimetableOpen(false)}
+        studentsList={studentsList}
+        onAttendanceSaved={(stats) => {
+          setDashboardToast(
+            `Period Attendance Recorded: ${stats.present} Present, ${stats.absent} Absent, ${stats.od} On Duty (OD)`
+          );
+          setTimeout(() => setDashboardToast(null), 4000);
+        }}
+      />
+
+      {/* Feature 1: Student Portal Access & Credentials Grant Modal */}
+      <GrantAccessModal
+        isOpen={isAccessModalOpen}
+        student={selectedAccessStudent}
+        onClose={() => {
+          setIsAccessModalOpen(false);
+          setSelectedAccessStudent(null);
+        }}
+        onAccessUpdated={(status) => {
+          setDashboardToast(
+            `Portal access for ${selectedAccessStudent?.name} set to ${status ? "ACTIVE (Granted)" : "INACTIVE (Revoked)"}`
+          );
+          setTimeout(() => setDashboardToast(null), 4000);
+        }}
+      />
+
+      {/* Dashboard Toast Banner */}
+      {dashboardToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold border border-slate-700/80 backdrop-blur-md animate-slideUp">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+          <span>{dashboardToast}</span>
+        </div>
+      )}
     </AmbientBackground>
   );
 }

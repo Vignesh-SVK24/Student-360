@@ -5,7 +5,6 @@ import {
   Bell,
   Lock,
   LogOut,
-  Check,
   Eye,
   EyeOff,
   Edit3,
@@ -14,6 +13,8 @@ import {
 } from "lucide-react";
 import StudentLayout from "../../components/student/StudentLayout";
 import { GlassButton } from '../../components/ui/GlassButton';
+import { Toast } from "../../components/ui/Toast";
+import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
 import { studentService } from "../../services/studentData";
 import { authApi, studentApi } from "../../services/apiClient";
@@ -21,6 +22,7 @@ import { authApi, studentApi } from "../../services/apiClient";
 export default function StudentSettings() {
   const navigate = useNavigate();
   const { student, refreshStudent, logout } = useStudentAuth();
+  const { toastMessage, showToast } = useToast();
 
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [editName, setEditName] = useState(student.name);
@@ -34,12 +36,6 @@ export default function StudentSettings() {
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
   const [showPass, setShowPass] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,12 +92,7 @@ export default function StudentSettings() {
       subtitle="Account security, notifications & session preferences"
       showBack={true}
     >
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-sm font-semibold border border-slate-700">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} />
 
       <div className="space-y-8 max-w-4xl mx-auto">
         {/* Account Information Card */}

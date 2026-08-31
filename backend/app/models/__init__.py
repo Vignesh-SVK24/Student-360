@@ -20,6 +20,8 @@ from app.models.project import Project, Technology, project_technologies
 from app.models.profile_link import ProfileLink
 from app.models.remark import FacultyRemark
 from app.models.audit_log import AuditLog
+from app.models.timetable import TimetableSlot
+from app.models.period_attendance import PeriodAttendanceLog
 
 __all__ = [
     "TimestampMixin",
@@ -44,4 +46,6 @@ __all__ = [
     "ProfileLink",
     "FacultyRemark",
     "AuditLog",
+    "TimetableSlot",
+    "PeriodAttendanceLog",
 ]

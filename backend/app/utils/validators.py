@@ -55,3 +55,11 @@ def validate_attendance_counts(present: int, absent: int, total: int) -> None:
         raise ValidationException("Absent classes cannot exceed total classes", "INVALID_ATTENDANCE")
     if present + absent > total:
         raise ValidationException("Sum of present and absent classes cannot exceed total classes", "INVALID_ATTENDANCE")
+
+
+def validate_password_confirmation(password: str, confirm_password: str, min_length: int = 6) -> None:
+    """Validate that passwords match and meet the minimum length requirements."""
+    if password != confirm_password:
+        raise ValidationException("Passwords do not match", "PASSWORDS_DO_NOT_MATCH")
+    if len(password) < min_length:
+        raise ValidationException(f"Password must be at least {min_length} characters long", "WEAK_PASSWORD")

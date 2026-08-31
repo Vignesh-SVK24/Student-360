@@ -25,6 +25,18 @@ class PageInfo(BaseModel):
     has_next: bool
     has_prev: bool
 
+    @classmethod
+    def from_counts(cls, total: int, page: int, page_size: int) -> "PageInfo":
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+        return cls(
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+            has_next=page < total_pages,
+            has_prev=page > 1,
+        )
+
 
 class PaginatedResponse(BaseModel, Generic[T]):
     items: List[T]

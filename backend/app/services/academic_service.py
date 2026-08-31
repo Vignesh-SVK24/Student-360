@@ -11,13 +11,9 @@ from app.repositories.academic_repository import AcademicRepository
 from app.repositories.student_repository import StudentRepository
 from app.schemas.academic import (
     AcademicBackgroundCreate,
-    AcademicBackgroundUpdate,
     SemesterAcademicRecordCreate,
-    SemesterAcademicRecordUpdate,
     AcademicAssessmentCreate,
-    AcademicAssessmentUpdate,
     StudentSubjectMarksCreate,
-    StudentSubjectMarksUpdate,
 )
 from app.utils.validators import validate_marks
 

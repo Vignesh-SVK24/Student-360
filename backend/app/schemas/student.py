@@ -111,3 +111,19 @@ class StudentSearchParams(BaseModel):
     year: Optional[str] = None
     semester: Optional[int] = None
     section: Optional[str] = None
+
+
+class StudentAccessResponse(BaseModel):
+    student_id: int
+    user_id: Optional[int] = None
+    has_account: bool
+    username: Optional[str] = None
+    email: Optional[str] = None
+    is_active: bool = False
+    status: str = "INACTIVE"
+    last_login_at: Optional[datetime] = None
+
+
+class StudentAccessUpdateRequest(BaseModel):
+    is_active: Optional[bool] = None
+    new_password: Optional[str] = None

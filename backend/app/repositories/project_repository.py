@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from sqlalchemy.orm import Session, joinedload
 from app.models.project import Project, Technology
 from app.repositories.base import BaseRepository

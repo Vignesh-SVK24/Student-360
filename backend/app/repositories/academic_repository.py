@@ -6,7 +6,6 @@ from app.models.academic import (
     AcademicAssessment,
     StudentSubjectMarks,
 )
-from app.repositories.base import BaseRepository
 
 
 class AcademicRepository:

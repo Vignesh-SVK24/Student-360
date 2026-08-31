@@ -94,6 +94,155 @@ def record_attendance(data: AttendanceCreate, db: Session = Depends(get_db)):
     )
 
 
+from datetime import date as dt_date
+from app.models.period_attendance import PeriodAttendanceLog
+from app.models.student import Student
+from app.schemas.period_attendance import (
+    BulkPeriodAttendanceRequest,
+    PeriodAttendanceSummaryResponse,
+    PeriodAttendanceItem,
+)
+
+
+@router.post("/attendance/period", response_model=ApiResponse[PeriodAttendanceSummaryResponse])
+def record_period_attendance(payload: BulkPeriodAttendanceRequest, db: Session = Depends(get_db)):
+    """
+    Mark period-wise student attendance from Time Table with PRESENT, ABSENT, or OD.
+    Persists granular period logs and updates cumulative student attendance.
+    """
+    target_date = dt_date.fromisoformat(payload.date) if isinstance(payload.date, str) else payload.date
+
+    # Delete existing logs for this date, day, and period to support updates
+    db.query(PeriodAttendanceLog).filter(
+        PeriodAttendanceLog.date == target_date,
+        PeriodAttendanceLog.period_number == payload.period_number,
+    ).delete(synchronize_session=False)
+
+    saved_items = []
+    present_count = 0
+    absent_count = 0
+    od_count = 0
+
+    for item in payload.attendance:
+        status_norm = item.status.strip().upper()
+        if status_norm == "PRESENT":
+            present_count += 1
+        elif status_norm == "ABSENT":
+            absent_count += 1
+        elif status_norm == "OD":
+            od_count += 1
+        else:
+            status_norm = "PRESENT"
+            present_count += 1
+
+        log = PeriodAttendanceLog(
+            student_id=item.student_id,
+            timetable_slot_id=payload.timetable_slot_id,
+            date=target_date,
+            day_of_week=payload.day_of_week,
+            period_number=payload.period_number,
+            subject_name=payload.subject_name,
+            status=status_norm,
+            notes=item.notes,
+        )
+        db.add(log)
+        db.flush()
+
+        student = db.query(Student).filter(Student.id == item.student_id).first()
+        saved_items.append(
+            PeriodAttendanceItem(
+                id=log.id,
+                student_id=item.student_id,
+                student_name=student.full_name if student else None,
+                register_number=student.register_number if student else None,
+                profile_photo_url=student.profile_photo_url if student else None,
+                status=status_norm,
+                notes=item.notes,
+            )
+        )
+
+    db.commit()
+
+    summary = PeriodAttendanceSummaryResponse(
+        date=str(target_date),
+        day_of_week=payload.day_of_week,
+        period_number=payload.period_number,
+        subject_name=payload.subject_name,
+        total_students=len(payload.attendance),
+        present_count=present_count,
+        absent_count=absent_count,
+        od_count=od_count,
+        records=saved_items,
+    )
+
+    return ApiResponse.success_response(
+        data=summary,
+        message=f"Attendance recorded for Period #{payload.period_number} ({present_count} Present, {absent_count} Absent, {od_count} OD)",
+    )
+
+
+@router.get("/attendance/period", response_model=ApiResponse[PeriodAttendanceSummaryResponse])
+def get_period_attendance(
+    date: str = Query(..., description="Date formatted as YYYY-MM-DD"),
+    period_number: int = Query(..., ge=1, le=10, description="Period number"),
+    db: Session = Depends(get_db),
+):
+    """Retrieve recorded period attendance sheet for a specific date and period."""
+    target_date = dt_date.fromisoformat(date)
+    logs = (
+        db.query(PeriodAttendanceLog)
+        .filter(
+            PeriodAttendanceLog.date == target_date,
+            PeriodAttendanceLog.period_number == period_number,
+        )
+        .all()
+    )
+
+    records = []
+    present_count = 0
+    absent_count = 0
+    od_count = 0
+    day_name = "Monday"
+    subj = "Class Period"
+
+    for log in logs:
+        student = db.query(Student).filter(Student.id == log.student_id).first()
+        day_name = log.day_of_week
+        subj = log.subject_name
+        if log.status == "PRESENT":
+            present_count += 1
+        elif log.status == "ABSENT":
+            absent_count += 1
+        elif log.status == "OD":
+            od_count += 1
+
+        records.append(
+            PeriodAttendanceItem(
+                id=log.id,
+                student_id=log.student_id,
+                student_name=student.full_name if student else None,
+                register_number=student.register_number if student else None,
+                profile_photo_url=student.profile_photo_url if student else None,
+                status=log.status,
+                notes=log.notes,
+            )
+        )
+
+    summary = PeriodAttendanceSummaryResponse(
+        date=str(target_date),
+        day_of_week=day_name,
+        period_number=period_number,
+        subject_name=subj,
+        total_students=len(records),
+        present_count=present_count,
+        absent_count=absent_count,
+        od_count=od_count,
+        records=records,
+    )
+    return ApiResponse.success_response(data=summary, message="Period attendance sheet retrieved")
+
+
+
 @router.patch("/attendance/{attendance_id}", response_model=ApiResponse[AttendanceResponse])
 def update_attendance(attendance_id: int, data: AttendanceUpdate, db: Session = Depends(get_db)):
     """Update attendance metrics for a specific entry."""

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -9,9 +9,15 @@ from app.schemas.student import (
     StudentSummary,
     StudentResponse,
     StudentSearchParams,
+    StudentAccessResponse,
+    StudentAccessUpdateRequest,
 )
 from app.schemas.student_detail import StudentDetailResponse
 from app.services.student_service import StudentService
+from app.models.user import User
+from app.models.student import Student
+from app.security.password import hash_password
+from app.core.exceptions import NotFoundException
 from app.utils.pagination import PaginatedResponse, PageInfo
 
 router = APIRouter(prefix="/students", tags=["Students"])
@@ -49,15 +55,7 @@ def search_students(
     skip = (page - 1) * page_size
     items, total = service.search(params, skip=skip, limit=page_size)
 
-    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
-    page_info = PageInfo(
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=total_pages,
-        has_next=page < total_pages,
-        has_prev=page > 1,
-    )
+    page_info = PageInfo.from_counts(total=total, page=page, page_size=page_size)
 
     return ApiResponse(
         success=True,
@@ -69,7 +67,7 @@ def search_students(
 from app.models.user import User
 from app.models.student import Student
 from app.core.constants import UserRole
-from app.dependencies.auth import get_current_user, get_current_student, require_role, verify_student_access
+from app.dependencies.auth import get_current_student, require_role
 from app.schemas.auth import StudentNameChangeRequest
 
 
@@ -171,3 +169,95 @@ def delete_student(student_id: int, db: Session = Depends(get_db)):
         message="Student deleted successfully",
         data=DeleteResponse(id=student_id, deleted=True),
     )
+
+
+@router.get("/{student_id}/access", response_model=ApiResponse[StudentAccessResponse])
+def get_student_access(student_id: int, db: Session = Depends(get_db)):
+    """Retrieve user login credentials status for a student."""
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise NotFoundException(f"Student #{student_id} not found", "STUDENT_NOT_FOUND")
+
+    user = None
+    if student.user_id:
+        user = db.query(User).filter(User.id == student.user_id).first()
+    if not user:
+        user = db.query(User).filter(User.register_number == student.register_number).first()
+
+    if user:
+        data = StudentAccessResponse(
+            student_id=student.id,
+            user_id=user.id,
+            has_account=True,
+            username=user.username or user.register_number,
+            email=user.email,
+            is_active=user.is_active,
+            status=user.status or ("ACTIVE" if user.is_active else "INACTIVE"),
+            last_login_at=user.last_login_at,
+        )
+    else:
+        data = StudentAccessResponse(
+            student_id=student.id,
+            user_id=None,
+            has_account=False,
+            username=student.register_number,
+            email=student.email,
+            is_active=False,
+            status="PENDING_PROVISION",
+            last_login_at=None,
+        )
+    return ApiResponse.success_response(data=data, message="Student access status retrieved")
+
+
+@router.post("/{student_id}/access", response_model=ApiResponse[StudentAccessResponse])
+def update_student_access(
+    student_id: int,
+    payload: StudentAccessUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    """Grant, toggle, or reset login portal access for a student."""
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise NotFoundException(f"Student #{student_id} not found", "STUDENT_NOT_FOUND")
+
+    user = None
+    if student.user_id:
+        user = db.query(User).filter(User.id == student.user_id).first()
+    if not user:
+        user = db.query(User).filter(User.register_number == student.register_number).first()
+
+    if not user:
+        raw_pass = payload.new_password if payload.new_password else "Student@360"
+        user = User(
+            email=student.email or f"{student.register_number.lower()}@college.edu",
+            username=student.register_number,
+            register_number=student.register_number,
+            hashed_password=hash_password(raw_pass),
+            role="STUDENT",
+            is_active=payload.is_active if payload.is_active is not None else True,
+            status="ACTIVE" if (payload.is_active if payload.is_active is not None else True) else "INACTIVE",
+        )
+        db.add(user)
+        db.flush()
+        student.user_id = user.id
+    else:
+        if payload.is_active is not None:
+            user.is_active = payload.is_active
+            user.status = "ACTIVE" if payload.is_active else "INACTIVE"
+        if payload.new_password:
+            user.hashed_password = hash_password(payload.new_password)
+
+    db.commit()
+    db.refresh(user)
+
+    data = StudentAccessResponse(
+        student_id=student.id,
+        user_id=user.id,
+        has_account=True,
+        username=user.username or user.register_number,
+        email=user.email,
+        is_active=user.is_active,
+        status=user.status or ("ACTIVE" if user.is_active else "INACTIVE"),
+        last_login_at=user.last_login_at,
+    )
+    return ApiResponse.success_response(data=data, message="Student portal access updated successfully")

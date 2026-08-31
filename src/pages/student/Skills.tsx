@@ -4,7 +4,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Check,
   Layers,
   Wrench,
   Users2
@@ -14,17 +13,19 @@ import { GlassDrawer } from '../../components/ui/GlassDrawer';
 import { GlassModal } from '../../components/ui/GlassModal';
 import { GlassInput } from '../../components/ui/GlassInput';
 import { GlassButton } from '../../components/ui/GlassButton';
+import { Toast } from "../../components/ui/Toast";
+import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
 import { skillService } from "../../services/studentData";
 import type { SkillItem, SkillCategory, SkillProficiency } from "../../types/student";
 
 export default function Skills() {
   const { student, refreshStudent } = useStudentAuth();
+  const { toastMessage, showToast } = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -38,11 +39,6 @@ export default function Skills() {
     { name: "Tools", icon: Wrench, color: "text-amber-600", bg: "bg-amber-50" },
     { name: "Soft Skills", icon: Users2, color: "text-emerald-600", bg: "bg-emerald-50" }
   ];
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   const handleOpenAdd = (defaultCat?: SkillCategory) => {
     setEditingId(null);
@@ -112,12 +108,7 @@ export default function Skills() {
         </GlassButton>
       }
     >
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-sm font-semibold border border-slate-700">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} />
 
       <div className="space-y-8">
         {categories.map((cat) => {
