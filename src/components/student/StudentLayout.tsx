@@ -41,11 +41,23 @@ export default function StudentLayout({
   const location = useLocation();
   const { student, logout } = useStudentAuth();
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  // Persist menu state across page navigations — only Home button toggles it
+  const [menuOpen, setMenuOpen] = useState<boolean>(() => {
+    const saved = sessionStorage.getItem("s360_student_menu_open");
+    return saved !== null ? saved === "true" : true; // default open
+  });
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const toggleMenu = () => {
+    setMenuOpen(prev => {
+      const next = !prev;
+      sessionStorage.setItem("s360_student_menu_open", String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -61,6 +73,7 @@ export default function StudentLayout({
   }, []);
 
   const handleLogout = async () => {
+    sessionStorage.removeItem("s360_student_menu_open");
     await logout();
     navigate("/login/student");
   };
@@ -251,14 +264,24 @@ export default function StudentLayout({
             animate={{ width: menuOpen ? "auto" : "74px" }}
             transition={{ type: "spring", stiffness: 350, damping: 28 }}
           >
+            {/* Home / Toggle Button — ONLY this collapses/expands the nav */}
             <motion.button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] active:scale-95 flex items-center justify-center text-white transition-all shrink-0 cursor-pointer shadow-lg shadow-[#0d4933]/50 border border-white/20"
+              onClick={toggleMenu}
+              className={`w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shrink-0 cursor-pointer shadow-lg border border-white/20 ${
+                menuOpen
+                  ? "bg-gradient-to-tr from-[#629176] via-[#0d4933] to-[#042821] shadow-[#0d4933]/50 ring-2 ring-emerald-400/40"
+                  : "bg-gradient-to-tr from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] shadow-[#0d4933]/50"
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title={menuOpen ? "Close Student Navigation" : "Open Student 360 Quick Menu"}
+              title={menuOpen ? "Click to collapse navigation" : "Click to open Student 360 navigation"}
             >
-              <Home className="w-7 h-7 text-white drop-shadow" />
+              <motion.div
+                animate={{ rotate: menuOpen ? 180 : 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              >
+                <Home className="w-7 h-7 text-white drop-shadow" />
+              </motion.div>
             </motion.button>
 
             <AnimatePresence>
@@ -273,10 +296,7 @@ export default function StudentLayout({
                   {quickMenuItems.map((item, index) => (
                     <motion.button
                       key={item.id}
-                      onClick={() => {
-                        navigate(item.path);
-                        setMenuOpen(false);
-                      }}
+                      onClick={() => navigate(item.path)}   // ← NO setMenuOpen(false) — stays open
                       initial={{ opacity: 0, scale: 0.6, x: -15 }}
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.6, x: -15 }}
