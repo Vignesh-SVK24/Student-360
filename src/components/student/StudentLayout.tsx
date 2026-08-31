@@ -41,23 +41,10 @@ export default function StudentLayout({
   const location = useLocation();
   const { student, logout } = useStudentAuth();
 
-  // Persist menu state across page navigations — only Home button toggles it
-  const [menuOpen, setMenuOpen] = useState<boolean>(() => {
-    const saved = sessionStorage.getItem("s360_student_menu_open");
-    return saved !== null ? saved === "true" : true; // default open
-  });
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-
-  const toggleMenu = () => {
-    setMenuOpen(prev => {
-      const next = !prev;
-      sessionStorage.setItem("s360_student_menu_open", String(next));
-      return next;
-    });
-  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,7 +60,6 @@ export default function StudentLayout({
   }, []);
 
   const handleLogout = async () => {
-    sessionStorage.removeItem("s360_student_menu_open");
     await logout();
     navigate("/login/student");
   };
@@ -259,66 +245,43 @@ export default function StudentLayout({
 
         {/* Floating Liquid Quick Menu */}
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-          <motion.div
-            className="flex items-center bg-slate-950/90 backdrop-blur-2xl rounded-[40px] p-2 sm:p-2.5 shadow-[0_20px_60px_rgba(0,0,0,0.5)] border border-white/20"
-            animate={{ width: menuOpen ? "auto" : "74px" }}
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
-          >
-            {/* Home / Toggle Button — ONLY this collapses/expands the nav */}
+          <div className="flex items-center bg-slate-950/90 backdrop-blur-2xl rounded-[40px] p-2 sm:p-2.5 shadow-[0_20px_60px_rgba(0,0,0,0.5)] border border-white/20">
+            {/* Home button — navigates to dashboard, never collapses the nav */}
             <motion.button
-              onClick={toggleMenu}
-              className={`w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shrink-0 cursor-pointer shadow-lg border border-white/20 ${
-                menuOpen
-                  ? "bg-gradient-to-tr from-[#629176] via-[#0d4933] to-[#042821] shadow-[#0d4933]/50 ring-2 ring-emerald-400/40"
-                  : "bg-gradient-to-tr from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] shadow-[#0d4933]/50"
-              }`}
+              onClick={() => navigate("/student/dashboard")}
+              className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#042821] via-[#0d4933] to-[#629176] hover:from-[#0d4933] hover:to-[#629176] flex items-center justify-center text-white shrink-0 cursor-pointer shadow-lg shadow-[#0d4933]/50 border border-white/20"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title={menuOpen ? "Click to collapse navigation" : "Click to open Student 360 navigation"}
+              title="Go to Dashboard"
             >
-              <motion.div
-                animate={{ rotate: menuOpen ? 180 : 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 22 }}
-              >
-                <Home className="w-7 h-7 text-white drop-shadow" />
-              </motion.div>
+              <Home className="w-7 h-7 text-white drop-shadow" />
             </motion.button>
 
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  className="flex items-center pl-2 pr-3 space-x-1.5 sm:space-x-2"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "auto", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 350, damping: 28 }}
+            {/* Nav items — always visible */}
+            <div className="flex items-center pl-2 pr-3 space-x-1.5 sm:space-x-2">
+              {quickMenuItems.map((item, index) => (
+                <motion.button
+                  key={item.id}
+                  onClick={() => navigate(item.path)}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.04, type: "spring", stiffness: 300, damping: 20 }}
+                  whileHover={{ scale: 1.15, y: -3 }}
+                  whileTap={{ scale: 0.92 }}
+                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all relative group cursor-pointer ${
+                    isCurrent(item.path)
+                      ? "bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] text-white shadow-lg shadow-[#0d4933]/50 ring-2 ring-[#629176]/40"
+                      : "bg-white/5 text-slate-300 hover:text-white hover:bg-white/20"
+                  }`}
                 >
-                  {quickMenuItems.map((item, index) => (
-                    <motion.button
-                      key={item.id}
-                      onClick={() => navigate(item.path)}   // ← NO setMenuOpen(false) — stays open
-                      initial={{ opacity: 0, scale: 0.6, x: -15 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.6, x: -15 }}
-                      transition={{ delay: index * 0.03, type: "spring", stiffness: 300, damping: 20 }}
-                      whileHover={{ scale: 1.15, y: -3 }}
-                      whileTap={{ scale: 0.92 }}
-                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all relative group cursor-pointer ${
-                        isCurrent(item.path)
-                          ? "bg-gradient-to-r from-[#042821] via-[#0d4933] to-[#629176] text-white shadow-lg shadow-[#0d4933]/50 ring-2 ring-[#629176]/40"
-                          : "bg-white/5 text-slate-300 hover:text-white hover:bg-white/20"
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="absolute -top-10 bg-slate-900/95 text-white text-xs font-semibold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl border border-white/10">
-                        {item.label}
-                      </span>
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                  <item.icon className="w-5 h-5" />
+                  <span className="absolute -top-10 bg-slate-900/95 text-white text-xs font-semibold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl border border-white/10">
+                    {item.label}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </AmbientBackground>
