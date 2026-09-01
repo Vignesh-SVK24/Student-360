@@ -95,6 +95,7 @@ export interface SubjectAttendance {
   total: number;
   present: number;
   absent: number;
+  od?: number;
   percentage: number;
 }
 
