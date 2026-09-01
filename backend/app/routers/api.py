@@ -13,6 +13,8 @@ from app.routers import (
     remarks,
     faculty,
     timetable,
+    classrooms,
+    profile_requests,
 )
 
 api_router = APIRouter()
@@ -30,3 +32,5 @@ api_router.include_router(profile_links.router)
 api_router.include_router(remarks.router)
 api_router.include_router(faculty.router)
 api_router.include_router(timetable.router)
+api_router.include_router(classrooms.router)
+api_router.include_router(profile_requests.router)

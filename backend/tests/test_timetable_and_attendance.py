@@ -35,11 +35,25 @@ def test_timetable_and_period_attendance(client, faculty_headers):
             "end_time": "10:15 AM",
             "room": "AI Lab 4",
         },
+        headers=faculty_headers,
     )
     assert update_res.status_code == status.HTTP_200_OK
     updated_slot = update_res.json()["data"]
     assert updated_slot["subject_name"] == "Advanced Neural Networks"
     assert updated_slot["start_time"] == "09:15 AM"
+
+    # 3b. Add a period row
+    add_p = client.post(
+        "/api/v1/timetable/periods",
+        json={
+            "start_time": "05:00 PM",
+            "end_time": "05:45 PM",
+            "subject_name": "Special Elective",
+        },
+        headers=faculty_headers,
+    )
+    assert add_p.status_code == status.HTTP_201_CREATED
+    assert len(add_p.json()["data"]["days"][0]["slots"]) >= 6
 
     # 4. Mark period attendance with PRESENT, ABSENT, OD
     att_res = client.post(

@@ -24,6 +24,7 @@ export default function FacultyLogin() {
   const navigate = useNavigate();
   const { login, register } = useFacultyAuth();
 
+  const [selectedRole, setSelectedRole] = useState("Class Advisor");
   const [identifier, setIdentifier] = useState("FAC-AIML-01");
   const [password, setPassword] = useState("Faculty@360");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,6 +43,7 @@ export default function FacultyLogin() {
     email: "",
     phone_number: "",
     designation: "Assistant Professor",
+    assigned_role: "CLASS_ADVISOR",
     password: "",
     confirm_password: "",
   });
@@ -52,6 +54,14 @@ export default function FacultyLogin() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotStatus, setForgotStatus] = useState<string | null>(null);
   const [forgotLoading, setForgotLoading] = useState(false);
+
+  const FACULTY_ROLES = [
+    { label: "Class Advisor", value: "CLASS_ADVISOR", desc: "Create classroom, add students & approve profile edit requests" },
+    { label: "Class Tutor", value: "CLASS_TUTOR", desc: "Manage students, mentor profile updates & assist advisor" },
+    { label: "HOD", value: "HOD", desc: "Full department classroom oversight & curriculum monitoring" },
+    { label: "Associate Professor", value: "ASSOCIATE_PROFESSOR", desc: "Senior academic evaluations & department reviews" },
+    { label: "Subject Faculty", value: "SUBJECT_FACULTY", desc: "Timetable-based attendance & subject evaluation" },
+  ];
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,6 +200,33 @@ export default function FacultyLogin() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-4">
+              {/* Role Selection UX Indicator */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
+                  Select Faculty Role
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 p-1 bg-white/[0.03] border border-white/10 rounded-2xl">
+                  {FACULTY_ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => setSelectedRole(r.label)}
+                      className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer ${
+                        selectedRole === r.label
+                          ? "bg-gradient-to-r from-[#0d4933] to-[#629176] text-white shadow-md shadow-[#0d4933]/50"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1.5 italic">
+                  <span className="text-[#629176] font-semibold">ℹ️ {selectedRole}:</span>
+                  {FACULTY_ROLES.find(r => r.label === selectedRole)?.desc}
+                </p>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Faculty ID or Email
@@ -204,7 +241,7 @@ export default function FacultyLogin() {
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-[#629176] text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#629176]/25 transition-all font-medium"
-                    placeholder="FAC-AIML-01 or ramanujam.s@college.edu"
+                    placeholder="FAC-AIML-01 or faculty@college.edu"
                   />
                 </div>
               </div>
@@ -344,6 +381,34 @@ export default function FacultyLogin() {
                     onChange={(e) => setRegData({ ...regData, faculty_id: e.target.value.toUpperCase() })}
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-mono uppercase focus:outline-none focus:border-[#629176]"
                     placeholder="FAC-CSE-05"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Faculty Role</label>
+                  <select
+                    value={regData.assigned_role}
+                    onChange={(e) => setRegData({ ...regData, assigned_role: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-white/10 text-white focus:outline-none focus:border-[#629176]"
+                  >
+                    <option value="CLASS_ADVISOR">Class Advisor</option>
+                    <option value="CLASS_TUTOR">Class Tutor</option>
+                    <option value="HOD">HOD</option>
+                    <option value="ASSOCIATE_PROFESSOR">Associate Professor</option>
+                    <option value="SUBJECT_FACULTY">Subject Faculty</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Academic Designation</label>
+                  <input
+                    type="text"
+                    required
+                    value={regData.designation}
+                    onChange={(e) => setRegData({ ...regData, designation: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#629176]"
+                    placeholder="Assistant / Associate Professor"
                   />
                 </div>
               </div>

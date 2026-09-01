@@ -8,6 +8,7 @@ export interface FacultyProfile {
   email: string;
   department: string;
   designation: string;
+  assigned_role?: string;
   profilePhoto?: string;
 }
 
@@ -17,7 +18,8 @@ const DEFAULT_FACULTY: FacultyProfile = {
   name: "Dr. S. Ramanujam",
   email: "ramanujam.s@college.edu",
   department: "Artificial Intelligence & Data Science",
-  designation: "Professor & Head of Department",
+  designation: "Class Advisor & Professor",
+  assigned_role: "CLASS_ADVISOR",
   profilePhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
 };
 
@@ -72,6 +74,7 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
             email: res.data.email,
             department: res.data.department_name || "Artificial Intelligence & Data Science",
             designation: "Faculty Mentor",
+            assigned_role: res.data.assigned_role || "CLASS_ADVISOR",
             profilePhoto: res.data.profile_photo_url || DEFAULT_FACULTY.profilePhoto,
           };
           setFaculty(updated);
@@ -96,6 +99,7 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         email: res.data.user.email,
         department: res.data.user.department_name || "Department of AI & Data Science",
         designation: "Faculty Mentor",
+        assigned_role: res.data.user.assigned_role || "CLASS_ADVISOR",
         profilePhoto: res.data.user.profile_photo_url || DEFAULT_FACULTY.profilePhoto,
       };
       setFaculty(updated);
@@ -130,6 +134,7 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         email: data.email,
         department: "Department of AI & Data Science",
         designation: data.designation || "Assistant Professor",
+        assigned_role: data.assigned_role || "CLASS_ADVISOR",
       };
       setFaculty(updated);
       localStorage.setItem("s360_faculty_profile", JSON.stringify(updated));

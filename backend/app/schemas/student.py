@@ -23,7 +23,16 @@ class StudentBase(BaseModel):
     semester: int = 1
     section: str = "A"
     student_type: str = StudentType.DAY_SCHOLAR.value
+    profile_status: str = "COMPLETED" # INCOMPLETE, PENDING_REVIEW, COMPLETED, LOCKED
+    is_locked: bool = True
     active: bool = True
+
+
+class StudentQuickCreate(BaseModel):
+    name: str
+    register_number: str
+    password: str
+    confirm_password: Optional[str] = None
 
 
 class StudentCreate(StudentBase):
@@ -72,6 +81,8 @@ class StudentUpdate(BaseModel):
     semester: Optional[int] = None
     section: Optional[str] = None
     student_type: Optional[str] = None
+    profile_status: Optional[str] = None
+    is_locked: Optional[bool] = None
     active: Optional[bool] = None
 
 
@@ -85,6 +96,8 @@ class StudentSummary(BaseModel):
     semester: int
     section: str
     student_type: str
+    profile_status: str = "COMPLETED"
+    is_locked: bool = True
     profile_photo_url: Optional[str] = None
     attendance_percentage: Optional[float] = None
     cgpa: Optional[float] = None
@@ -126,4 +139,4 @@ class StudentAccessResponse(BaseModel):
 
 class StudentAccessUpdateRequest(BaseModel):
     is_active: Optional[bool] = None
-    new_password: Optional[str] = None
+    new_password: Optional[str] = None

@@ -42,6 +42,8 @@ class StudentDetailResponse(BaseModel):
     semester: int
     section: str
     student_type: str
+    profile_status: str = "COMPLETED"
+    is_locked: bool = True
     active: bool
 
     attendance_percentage: float = 0.0

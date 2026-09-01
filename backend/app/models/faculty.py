@@ -16,9 +16,12 @@ class Faculty(Base, TimestampMixin):
     phone_number = Column(String(50), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
     designation = Column(String(100), default="Assistant Professor", nullable=False)
+    assigned_role = Column(String(50), default="CLASS_ADVISOR", nullable=False, index=True) # HOD, ASSOCIATE_PROFESSOR, CLASS_ADVISOR, CLASS_TUTOR, SUBJECT_FACULTY
     profile_photo_url = Column(String(2048), nullable=True)
     active = Column(Boolean, default=True, nullable=False)
 
     user = relationship("User", back_populates="faculty")
     department = relationship("Department", back_populates="faculty")
     remarks = relationship("FacultyRemark", back_populates="faculty")
+    classroom_assignments = relationship("FacultyClassroomAssignment", back_populates="faculty", cascade="all, delete-orphan")
+    subject_assignments = relationship("FacultySubjectAssignment", back_populates="faculty", cascade="all, delete-orphan")

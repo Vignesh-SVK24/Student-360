@@ -2,13 +2,16 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.models.timetable import TimetableSlot
 from app.models.department import Department
+from app.models.classroom import FacultySubjectAssignment
+from app.models.faculty import Faculty
 from app.schemas.timetable import (
     TimetableSlotResponse,
     TimetableSlotUpdate,
     DayTimetable,
     WeeklyTimetableResponse,
+    PeriodCreate,
 )
-from app.core.exceptions import NotFoundException
+from app.core.exceptions import NotFoundException, BadRequestException
 
 DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
@@ -74,9 +77,13 @@ class TimetableService:
     def __init__(self, db: Session):
         self.db = db
 
-    def initialize_if_empty(self) -> None:
+    def initialize_if_empty(self, classroom_id: Optional[int] = None) -> None:
         """Seed standard 6-day curriculum timetable if no slots exist."""
-        count = self.db.query(TimetableSlot).count()
+        query = self.db.query(TimetableSlot)
+        if classroom_id:
+            query = query.filter(TimetableSlot.classroom_id == classroom_id)
+        count = query.count()
+
         if count == 0:
             dept = self.db.query(Department).first()
             dept_id = dept.id if dept else None
@@ -84,12 +91,14 @@ class TimetableService:
             for day, periods in DEFAULT_SCHEDULE.items():
                 for p in periods:
                     slot = TimetableSlot(
+                        classroom_id=classroom_id,
                         day_of_week=day,
                         period_number=p["period"],
                         start_time=p["start"],
                         end_time=p["end"],
                         subject_name=p["subject"],
                         subject_code=p["code"],
+                        entry_type="SUBJECT",
                         room=p["room"],
                         faculty_name=p["faculty"],
                         department_id=dept_id,
@@ -97,22 +106,24 @@ class TimetableService:
                     self.db.add(slot)
             self.db.commit()
 
-    def get_weekly_timetable(self) -> WeeklyTimetableResponse:
-        self.initialize_if_empty()
-        all_slots = self.db.query(TimetableSlot).all()
+    def get_weekly_timetable(self, classroom_id: Optional[int] = None) -> WeeklyTimetableResponse:
+        self.initialize_if_empty(classroom_id)
+        query = self.db.query(TimetableSlot)
+        if classroom_id:
+            query = query.filter(TimetableSlot.classroom_id == classroom_id)
+        all_slots = query.all()
 
         days_map = {d: [] for d in DAYS_ORDER}
         for slot in all_slots:
             if slot.day_of_week in days_map:
                 days_map[slot.day_of_week].append(TimetableSlotResponse.model_validate(slot))
 
-        # Sort slots within each day by period_number
         days_list = []
         for day in DAYS_ORDER:
             slots = sorted(days_map[day], key=lambda s: s.period_number)
             days_list.append(DayTimetable(day=day, slots=slots))
 
-        return WeeklyTimetableResponse(days=days_list)
+        return WeeklyTimetableResponse(classroom_id=classroom_id, days=days_list)
 
     def update_slot(self, slot_id: int, update_data: TimetableSlotUpdate) -> TimetableSlotResponse:
         slot = self.db.query(TimetableSlot).filter(TimetableSlot.id == slot_id).first()
@@ -123,6 +134,8 @@ class TimetableService:
             slot.subject_name = update_data.subject_name.strip()
         if update_data.subject_code is not None:
             slot.subject_code = update_data.subject_code.strip()
+        if update_data.entry_type is not None:
+            slot.entry_type = update_data.entry_type.strip()
         if update_data.start_time is not None:
             slot.start_time = update_data.start_time.strip()
         if update_data.end_time is not None:
@@ -131,14 +144,56 @@ class TimetableService:
             slot.room = update_data.room.strip()
         if update_data.faculty_name is not None:
             slot.faculty_name = update_data.faculty_name.strip()
+        if update_data.faculty_id is not None:
+            slot.faculty_id = update_data.faculty_id
+        if update_data.subject_id is not None:
+            slot.subject_id = update_data.subject_id
 
         self.db.commit()
         self.db.refresh(slot)
         return TimetableSlotResponse.model_validate(slot)
 
-    def reset_schedule(self) -> WeeklyTimetableResponse:
-        """Reset timetable to factory defaults."""
-        self.db.query(TimetableSlot).delete()
+    def add_period_row(self, data: PeriodCreate) -> WeeklyTimetableResponse:
+        """Add a new period slot across all 6 days."""
+        query = self.db.query(TimetableSlot)
+        if data.classroom_id:
+            query = query.filter(TimetableSlot.classroom_id == data.classroom_id)
+        
+        # Determine next period number
+        existing_slots = query.filter(TimetableSlot.day_of_week == "Monday").all()
+        next_period = len(existing_slots) + 1
+
+        for day in DAYS_ORDER:
+            slot = TimetableSlot(
+                classroom_id=data.classroom_id,
+                day_of_week=day,
+                period_number=next_period,
+                start_time=data.start_time,
+                end_time=data.end_time,
+                subject_name=data.subject_name or "Free Period",
+                subject_code=data.subject_code,
+                entry_type=data.entry_type or "SUBJECT",
+            )
+            self.db.add(slot)
         self.db.commit()
-        self.initialize_if_empty()
-        return self.get_weekly_timetable()
+        return self.get_weekly_timetable(data.classroom_id)
+
+    def delete_period_row(self, period_number: int, classroom_id: Optional[int] = None) -> WeeklyTimetableResponse:
+        """Delete a period row across all 6 days."""
+        query = self.db.query(TimetableSlot).filter(TimetableSlot.period_number == period_number)
+        if classroom_id:
+            query = query.filter(TimetableSlot.classroom_id == classroom_id)
+        query.delete()
+        self.db.commit()
+        return self.get_weekly_timetable(classroom_id)
+
+    def reset_schedule(self, classroom_id: Optional[int] = None) -> WeeklyTimetableResponse:
+        """Reset timetable to factory defaults."""
+        query = self.db.query(TimetableSlot)
+        if classroom_id:
+            query = query.filter(TimetableSlot.classroom_id == classroom_id)
+        query.delete()
+        self.db.commit()
+        self.initialize_if_empty(classroom_id)
+        return self.get_weekly_timetable(classroom_id)
+

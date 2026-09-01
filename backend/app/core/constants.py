@@ -80,3 +80,50 @@ class AccountStatus(str, Enum):
     INACTIVE = "INACTIVE"
     SUSPENDED = "SUSPENDED"
     PENDING = "PENDING"
+
+
+class FacultyRole(str, Enum):
+    HOD = "HOD"
+    ASSOCIATE_PROFESSOR = "ASSOCIATE_PROFESSOR"
+    CLASS_ADVISOR = "CLASS_ADVISOR"
+    CLASS_TUTOR = "CLASS_TUTOR"
+    SUBJECT_FACULTY = "SUBJECT_FACULTY"
+
+
+class ProfileCompletionStatus(str, Enum):
+    INCOMPLETE = "INCOMPLETE"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    COMPLETED = "COMPLETED"
+    LOCKED = "LOCKED"
+
+
+class EditRequestStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
+    USED = "USED"
+
+
+class AttendanceStatus(str, Enum):
+    PRESENT = "PRESENT"
+    ABSENT = "ABSENT"
+    OD = "OD"
+
+
+class ClassroomStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ARCHIVED = "ARCHIVED"
+
+
+class FacultyClassroomRole(str, Enum):
+    ADVISOR = "ADVISOR"
+    TUTOR = "TUTOR"
+
+
+class TimetableEntryType(str, Enum):
+    SUBJECT = "SUBJECT"
+    BREAK = "BREAK"
+    LUNCH = "LUNCH"
+    FREE = "FREE"

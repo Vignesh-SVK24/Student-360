@@ -10,6 +10,7 @@ class FacultyBase(BaseModel):
     phone_number: Optional[str] = None
     department_id: Optional[int] = None
     designation: str = "Assistant Professor"
+    assigned_role: str = "CLASS_ADVISOR"  # HOD, ASSOCIATE_PROFESSOR, CLASS_ADVISOR, CLASS_TUTOR, SUBJECT_FACULTY
     profile_photo_url: Optional[str] = None
     active: bool = True
 
@@ -24,6 +25,7 @@ class FacultyUpdate(BaseModel):
     phone_number: Optional[str] = None
     department_id: Optional[int] = None
     designation: Optional[str] = None
+    assigned_role: Optional[str] = None
     profile_photo_url: Optional[str] = None
     active: Optional[bool] = None
 
@@ -33,4 +35,4 @@ class FacultyResponse(FacultyBase):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)

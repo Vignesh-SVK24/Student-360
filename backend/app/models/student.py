@@ -31,6 +31,8 @@ class Student(Base, TimestampMixin):
     semester = Column(Integer, default=1, nullable=False)
     section = Column(String(10), default="A", nullable=False)
     student_type = Column(String(50), default=StudentType.DAY_SCHOLAR.value, nullable=False)
+    profile_status = Column(String(50), default="COMPLETED", nullable=False, index=True) # INCOMPLETE, PENDING_REVIEW, COMPLETED, LOCKED
+    is_locked = Column(Boolean, default=True, nullable=False)
     active = Column(Boolean, default=True, nullable=False)
 
     # Relationships
@@ -49,3 +51,6 @@ class Student(Base, TimestampMixin):
     projects = relationship("Project", back_populates="student", cascade="all, delete-orphan")
     profile_links = relationship("ProfileLink", back_populates="student", cascade="all, delete-orphan")
     remarks = relationship("FacultyRemark", back_populates="student", cascade="all, delete-orphan")
+    classroom_memberships = relationship("ClassroomMembership", back_populates="student", cascade="all, delete-orphan")
+    edit_requests = relationship("ProfileEditRequest", back_populates="student", cascade="all, delete-orphan")
+    edit_permissions = relationship("StudentEditPermission", back_populates="student", cascade="all, delete-orphan")

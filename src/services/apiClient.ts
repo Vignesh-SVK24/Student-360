@@ -7,6 +7,7 @@ export interface UserSession {
   email: string;
   username?: string;
   role: "STUDENT" | "FACULTY" | "ADMIN";
+  assigned_role?: "HOD" | "ASSOCIATE_PROFESSOR" | "CLASS_ADVISOR" | "CLASS_TUTOR" | "SUBJECT_FACULTY" | string;
   profile_id?: number;
   identifier?: string;
   name?: string;
@@ -309,6 +310,8 @@ export interface TimetableSlot {
   subject_code?: string;
   room?: string;
   faculty_name?: string;
+  entry_type?: "SUBJECT" | "LAB" | "BREAK" | "LUNCH" | "FREE" | string;
+  classroom_id?: number;
 }
 
 export interface DayTimetable {
@@ -443,8 +446,52 @@ export const timetableApi = {
     return { success: true, data: foundSlot ?? ({ id: slotId, ...payload } as any) };
   },
 
-  resetTimetable: async () => {
-    const res = await apiRequest<WeeklyTimetableResponse>("/timetable/reset", {
+  addPeriod: async (payload: { start_time: string; end_time: string; subject_name?: string; entry_type?: string; classroom_id?: number }) => {
+    const res = await apiRequest<WeeklyTimetableResponse>("/timetable/periods", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    // Fallback: update local schedule
+    const saved = localStorage.getItem("s360_timetable_schedule");
+    const current: WeeklyTimetableResponse = saved ? JSON.parse(saved) : DEFAULT_TIMETABLE_FALLBACK;
+    const nextPeriod = (current.days[0]?.slots.length || 0) + 1;
+    current.days.forEach(d => {
+      d.slots.push({
+        id: Date.now() + Math.random(),
+        day_of_week: d.day,
+        period_number: nextPeriod,
+        start_time: payload.start_time,
+        end_time: payload.end_time,
+        subject_name: payload.subject_name || "Free Period",
+        entry_type: (payload.entry_type as any) || "SUBJECT",
+      });
+    });
+    localStorage.setItem("s360_timetable_schedule", JSON.stringify(current));
+    return { success: true, data: current };
+  },
+
+  deletePeriod: async (periodNumber: number, classroomId?: number) => {
+    const res = await apiRequest<WeeklyTimetableResponse>(`/timetable/periods/${periodNumber}${classroomId ? `?classroom_id=${classroomId}` : ""}`, {
+      method: "DELETE",
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    // Fallback: update local schedule
+    const saved = localStorage.getItem("s360_timetable_schedule");
+    const current: WeeklyTimetableResponse = saved ? JSON.parse(saved) : DEFAULT_TIMETABLE_FALLBACK;
+    current.days.forEach(d => {
+      d.slots = d.slots.filter(s => s.period_number !== periodNumber);
+    });
+    localStorage.setItem("s360_timetable_schedule", JSON.stringify(current));
+    return { success: true, data: current };
+  },
+
+  resetTimetable: async (classroomId?: number) => {
+    const res = await apiRequest<WeeklyTimetableResponse>(`/timetable/reset${classroomId ? `?classroom_id=${classroomId}` : ""}`, {
       method: "POST",
     });
 
@@ -521,3 +568,314 @@ export const attendanceApi = {
     return { success: false, error: "Not found" };
   },
 };
+
+// Classroom Models & API
+export interface Classroom {
+  id: number;
+  class_name: string;
+  class_code: string;
+  department_id?: number;
+  department_name?: string;
+  academic_year: string;
+  year: string;
+  semester: number;
+  section: string;
+  advisor_faculty_id?: number;
+  tutor_faculty_id?: number;
+  advisor_name?: string;
+  tutor_name?: string;
+  student_count: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ClassroomDetailResponse extends Classroom {
+  students: any[];
+}
+
+export const classroomApi = {
+  createClassroom: async (payload: {
+    class_name: string;
+    academic_year: string;
+    year: string;
+    semester: number;
+    section: string;
+    advisor_faculty_id?: number;
+    tutor_faculty_id?: number;
+  }) => {
+    const res = await apiRequest<Classroom>("/classrooms", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    // Fallback for static frontend
+    const newClass: Classroom = {
+      id: Date.now(),
+      class_name: payload.class_name,
+      class_code: `CLS-${payload.year}${payload.section}-${Date.now().toString().slice(-4)}`,
+      academic_year: payload.academic_year,
+      year: payload.year,
+      semester: payload.semester,
+      section: payload.section,
+      student_count: 0,
+      is_active: true,
+    };
+    const saved = localStorage.getItem("s360_classrooms");
+    const list: Classroom[] = saved ? JSON.parse(saved) : [];
+    list.unshift(newClass);
+    localStorage.setItem("s360_classrooms", JSON.stringify(list));
+    localStorage.setItem("s360_my_classroom", JSON.stringify({ ...newClass, students: [] }));
+    return { success: true, data: newClass };
+  },
+
+  getMyClassroom: async () => {
+    const res = await apiRequest<ClassroomDetailResponse>("/classrooms/my");
+    if (res.success && res.data) {
+      return res;
+    }
+    const local = localStorage.getItem("s360_my_classroom");
+    if (local) {
+      try {
+        return { success: true, data: JSON.parse(local) };
+      } catch {
+        // Ignore
+      }
+    }
+    return { success: true, data: null };
+  },
+
+  getClassroomDetail: async (id: number) => {
+    const res = await apiRequest<ClassroomDetailResponse>(`/classrooms/${id}`);
+    if (res.success && res.data) {
+      return res;
+    }
+    const local = localStorage.getItem("s360_my_classroom");
+    if (local) {
+      return { success: true, data: JSON.parse(local) };
+    }
+    return { success: false, error: "Classroom not found" };
+  },
+
+  getDepartmentClassrooms: async (deptId: number) => {
+    const res = await apiRequest<Classroom[]>(`/classrooms/department/${deptId}`);
+    if (res.success && res.data) {
+      return res;
+    }
+    const saved = localStorage.getItem("s360_classrooms");
+    const list: Classroom[] = saved ? JSON.parse(saved) : [];
+    return { success: true, data: list };
+  },
+
+  createStudentInClassroom: async (
+    classroomId: number,
+    payload: { name: string; register_number: string; password: string; confirm_password?: string }
+  ) => {
+    const res = await apiRequest<any>(`/classrooms/${classroomId}/students`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    // Fallback in localStorage
+    const local = localStorage.getItem("s360_my_classroom");
+    if (local) {
+      const cls = JSON.parse(local);
+      const newStud = {
+        id: Date.now(),
+        register_number: payload.register_number,
+        full_name: payload.name,
+        profile_status: "INCOMPLETE",
+        is_locked: false,
+        year: cls.year || "II",
+        semester: cls.semester || 3,
+        section: cls.section || "A",
+        student_type: "DAY SCHOLAR",
+        attendance_percentage: 100,
+        cgpa: 8.5,
+        skills: ["Machine Learning", "Python"],
+      };
+      cls.students = cls.students || [];
+      cls.students.push(newStud);
+      cls.student_count = cls.students.length;
+      localStorage.setItem("s360_my_classroom", JSON.stringify(cls));
+      return { success: true, data: newStud };
+    }
+    return { success: true, data: { register_number: payload.register_number, full_name: payload.name } };
+  },
+};
+
+// Profile Requests Models & API
+export interface ProfileEditRequest {
+  id: number;
+  student_id: number;
+  student_name?: string;
+  student_register_number?: string;
+  student_photo_url?: string;
+  classroom_id?: number;
+  section_name: string;
+  field_name: string;
+  current_value?: string;
+  requested_value: string;
+  reason: string;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "USED";
+  requested_at: string;
+  reviewed_by_name?: string;
+  reviewed_at?: string;
+  advisor_comment?: string;
+  permission?: {
+    id: number;
+    student_id: number;
+    field_name: string;
+    granted_at: string;
+    expires_at: string;
+    status: string;
+  };
+}
+
+export const profileRequestApi = {
+  submitEditRequest: async (payload: {
+    section_name: string;
+    field_name: string;
+    current_value?: string;
+    requested_value: string;
+    reason: string;
+  }) => {
+    const res = await apiRequest<ProfileEditRequest>("/students/me/profile-edit-requests", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    // Local fallback
+    const newReq: ProfileEditRequest = {
+      id: Date.now(),
+      student_id: 1,
+      section_name: payload.section_name,
+      field_name: payload.field_name,
+      current_value: payload.current_value,
+      requested_value: payload.requested_value,
+      reason: payload.reason,
+      status: "PENDING",
+      requested_at: new Date().toISOString(),
+    };
+    const saved = localStorage.getItem("s360_edit_requests");
+    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
+    list.unshift(newReq);
+    localStorage.setItem("s360_edit_requests", JSON.stringify(list));
+    return { success: true, data: newReq };
+  },
+
+  submitNameChangeRequest: async (payload: { requested_name: string; reason: string }) => {
+    const res = await apiRequest<ProfileEditRequest>("/students/me/name-change-request", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    return profileRequestApi.submitEditRequest({
+      section_name: "Name",
+      field_name: "full_name",
+      requested_value: payload.requested_name,
+      reason: payload.reason,
+    });
+  },
+
+  getMyRequests: async () => {
+    const res = await apiRequest<ProfileEditRequest[]>("/students/me/profile-edit-requests");
+    if (res.success && res.data) {
+      return res;
+    }
+    const saved = localStorage.getItem("s360_edit_requests");
+    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
+    return { success: true, data: list };
+  },
+
+  getClassroomRequests: async (classroomId: number, status?: string) => {
+    const res = await apiRequest<ProfileEditRequest[]>(
+      `/classrooms/${classroomId}/profile-edit-requests${status ? `?status=${status}` : ""}`
+    );
+    if (res.success && res.data) {
+      return res;
+    }
+    const saved = localStorage.getItem("s360_edit_requests");
+    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
+    return { success: true, data: list };
+  },
+
+  approveRequest: async (requestId: number, review?: { advisor_comment?: string; permission_duration_hours?: number }) => {
+    const res = await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/approve`, {
+      method: "POST",
+      body: JSON.stringify(review || { action: "APPROVE", permission_duration_hours: 24 }),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    // Local fallback
+    const saved = localStorage.getItem("s360_edit_requests");
+    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
+    const item = list.find(r => r.id === requestId);
+    if (item) {
+      item.status = "APPROVED";
+      item.advisor_comment = review?.advisor_comment || "Approved by Advisor";
+      item.permission = {
+        id: Date.now(),
+        student_id: item.student_id,
+        field_name: item.field_name,
+        granted_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+        status: "ACTIVE",
+      };
+      localStorage.setItem("s360_edit_requests", JSON.stringify(list));
+      return { success: true, data: item };
+    }
+    return { success: false, error: "Request not found" };
+  },
+
+  rejectRequest: async (requestId: number, review?: { advisor_comment?: string }) => {
+    const res = await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/reject`, {
+      method: "POST",
+      body: JSON.stringify(review || { action: "REJECT" }),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    const saved = localStorage.getItem("s360_edit_requests");
+    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
+    const item = list.find(r => r.id === requestId);
+    if (item) {
+      item.status = "REJECTED";
+      item.advisor_comment = review?.advisor_comment || "Rejected";
+      localStorage.setItem("s360_edit_requests", JSON.stringify(list));
+      return { success: true, data: item };
+    }
+    return { success: false, error: "Request not found" };
+  },
+
+  applyApprovedField: async (payload: { field_name: string; new_value: string }) => {
+    const res = await apiRequest<any>("/students/me/approved-field", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    return { success: true, data: payload };
+  },
+
+  completeProfile: async (payload: Record<string, any>) => {
+    const res = await apiRequest<any>("/students/me/complete-profile", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.data) {
+      return res;
+    }
+    return { success: true, data: { ...payload, profile_status: "LOCKED", is_locked: true } };
+  },
+};

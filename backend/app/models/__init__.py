@@ -20,6 +20,16 @@ from app.models.project import Project, Technology, project_technologies
 from app.models.profile_link import ProfileLink
 from app.models.remark import FacultyRemark
 from app.models.audit_log import AuditLog
+from app.models.classroom import (
+    Classroom,
+    ClassroomMembership,
+    FacultyClassroomAssignment,
+    FacultySubjectAssignment,
+)
+from app.models.profile_request import (
+    ProfileEditRequest,
+    StudentEditPermission,
+)
 from app.models.timetable import TimetableSlot
 from app.models.period_attendance import PeriodAttendanceLog
 
@@ -32,6 +42,12 @@ __all__ = [
     "Student",
     "Guardian",
     "Faculty",
+    "Classroom",
+    "ClassroomMembership",
+    "FacultyClassroomAssignment",
+    "FacultySubjectAssignment",
+    "ProfileEditRequest",
+    "StudentEditPermission",
     "StudentAcademicBackground",
     "SemesterAcademicRecord",
     "AcademicAssessment",

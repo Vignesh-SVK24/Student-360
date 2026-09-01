@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Edit3,
   Camera,
   ExternalLink,
   Globe,
@@ -12,7 +11,12 @@ import {
   Check,
   Calendar,
   UserCheck,
-  Code
+  Code,
+  Lock,
+  Unlock,
+  Clock,
+  Send,
+  Sparkles
 } from "lucide-react";
 import StudentLayout from "../../components/student/StudentLayout";
 import { GlassDrawer } from '../../components/ui/GlassDrawer';
@@ -21,14 +25,48 @@ import { GlassInput } from '../../components/ui/GlassInput';
 import { GlassButton } from '../../components/ui/GlassButton';
 import { useStudentAuth } from "../../context/StudentAuthContext";
 import { studentService } from "../../services/studentData";
+import { profileRequestApi, type ProfileEditRequest } from "../../services/apiClient";
+import { RequestEditModal } from "../../components/student/RequestEditModal";
+import { CompleteProfileModal } from "../../components/student/CompleteProfileModal";
 
 export default function StudentProfile() {
   const { student, refreshStudent } = useStudentAuth();
 
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [isCompleteProfileOpen, setIsCompleteProfileOpen] = useState(false);
+  const [preselectedField, setPreselectedField] = useState<{ section: string; field: string; currentValue: string } | undefined>();
   const [newPhotoUrl, setNewPhotoUrl] = useState(student.profileImage);
-  const [saveToast, setSaveToast] = useState(false);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  // Edit requests & permissions
+  const [myRequests, setMyRequests] = useState<ProfileEditRequest[]>([]);
+  const [activePermField, setActivePermField] = useState<string>("");
+  const [activePermValue, setActivePermValue] = useState<string>("");
+  const [savingActivePerm, setSavingActivePerm] = useState(false);
+
+  const fetchRequests = async () => {
+    try {
+      const res = await profileRequestApi.getMyRequests();
+      if (res.success && res.data) {
+        setMyRequests(res.data);
+        const active = res.data.find(r => r.permission && r.permission.status === "ACTIVE" && new Date(r.permission.expires_at) > new Date());
+        if (active) {
+          setActivePermField(active.field_name);
+          setActivePermValue(active.requested_value || "");
+        } else {
+          setActivePermField("");
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
   // Edit form state
   const [formData, setFormData] = useState({
@@ -48,22 +86,13 @@ export default function StudentProfile() {
   });
 
   const handleOpenEdit = () => {
-    setFormData({
-      name: student.name,
-      registerNumber: student.registerNumber,
-      email: student.personal.email,
-      phone: student.personal.phone,
-      address: student.personal.address,
-      residenceType: student.personal.residenceType,
-      parentName: student.parent.name,
-      parentContact: student.parent.contact,
-      parentEmail: student.parent.email,
-      parentOccupation: student.parent.occupation,
-      github: student.links.github,
-      linkedin: student.links.linkedin,
-      portfolio: student.links.portfolio
+    // If profile is locked, guide them to request edit
+    setPreselectedField({
+      section: "Personal Details",
+      field: "phone_number",
+      currentValue: student.personal.phone,
     });
-    setIsEditDrawerOpen(true);
+    setIsRequestModalOpen(true);
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -93,7 +122,25 @@ export default function StudentProfile() {
     });
     refreshStudent();
     setIsEditDrawerOpen(false);
-    showToastNotification();
+    showToastNotification("Profile updated successfully!");
+  };
+
+  const handleApplyActivePermission = async () => {
+    if (!activePermField || !activePermValue.trim()) return;
+    setSavingActivePerm(true);
+    try {
+      const res = await profileRequestApi.applyApprovedField({
+        field_name: activePermField,
+        new_value: activePermValue.trim(),
+      });
+      if (res.success) {
+        showToastNotification(`Field "${activePermField}" updated and profile re-locked.`);
+        await fetchRequests();
+        refreshStudent();
+      }
+    } finally {
+      setSavingActivePerm(false);
+    }
   };
 
   const handleSavePhoto = async () => {
@@ -101,36 +148,137 @@ export default function StudentProfile() {
       await studentService.updateProfilePhoto(newPhotoUrl.trim());
       refreshStudent();
       setIsPhotoModalOpen(false);
-      showToastNotification();
+      showToastNotification("Profile photo updated!");
     }
   };
 
-  const showToastNotification = () => {
-    setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 3000);
+  const showToastNotification = (msg: string) => {
+    setSaveToast(msg);
+    setTimeout(() => setSaveToast(null), 4000);
   };
+
+  const activeRequest = myRequests.find(r => r.status === "APPROVED" && r.permission?.status === "ACTIVE");
+  const pendingRequest = myRequests.find(r => r.status === "PENDING");
 
   return (
     <StudentLayout
       pageTitle="My Profile"
-      subtitle="Personal, academic & contact records"
+      subtitle="Personal, academic & institutional records"
       showBack={true}
       actions={
-        <GlassButton onClick={handleOpenEdit} className="gap-2 bg-slate-900 hover:bg-slate-800 text-xs py-2 px-4 cursor-pointer">
-          <Edit3 className="w-3.5 h-3.5" />
-          <span>Edit Profile</span>
-        </GlassButton>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-sm">
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            <span>🔒 Profile Locked</span>
+          </span>
+
+          <GlassButton
+            onClick={() => {
+              setPreselectedField({
+                section: "Name",
+                field: "full_name",
+                currentValue: student.name,
+              });
+              setIsRequestModalOpen(true);
+            }}
+            className="gap-1.5 bg-white text-slate-800 border border-slate-200 text-xs py-2 px-3.5 cursor-pointer shadow-sm hover:bg-slate-50"
+          >
+            <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+            <span>Change Name</span>
+          </GlassButton>
+
+          <GlassButton
+            onClick={() => {
+              setPreselectedField({
+                section: "Personal Details",
+                field: "phone_number",
+                currentValue: student.personal.phone,
+              });
+              setIsRequestModalOpen(true);
+            }}
+            className="gap-1.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs py-2 px-3.5 cursor-pointer shadow-md shadow-amber-500/20"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Request Edit</span>
+          </GlassButton>
+
+          <GlassButton
+            onClick={() => setIsCompleteProfileOpen(true)}
+            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-3.5 cursor-pointer shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Complete Setup</span>
+          </GlassButton>
+        </div>
       }
     >
       {/* Toast Notification */}
       {saveToast && (
         <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-sm font-semibold border border-slate-700 animate-bounce">
           <Check className="w-4 h-4 text-emerald-400" />
-          <span>Profile updated successfully!</span>
+          <span>{saveToast}</span>
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-6">
+        {/* Active Permission Edit Window Alert */}
+        {activeRequest && activeRequest.permission && (
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/90 to-slate-900 border-2 border-emerald-500/50 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <h4 className="text-sm font-extrabold text-emerald-300 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Unlock className="w-4 h-4" /> 24-Hour Edit Window Active
+                </h4>
+              </div>
+              <p className="text-xs text-slate-300">
+                Your Class Advisor approved editing <strong>"{activeRequest.field_name}"</strong>. Expires at {new Date(activeRequest.permission.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <input
+                type="text"
+                value={activePermValue}
+                onChange={(e) => setActivePermValue(e.target.value)}
+                placeholder="Enter new value..."
+                className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-emerald-400 flex-1 md:w-64"
+              />
+              <button
+                type="button"
+                disabled={savingActivePerm || !activePermValue.trim()}
+                onClick={handleApplyActivePermission}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30 cursor-pointer disabled:opacity-50 transition-all shrink-0"
+              >
+                {savingActivePerm ? "Applying..." : "Save & Re-Lock"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pending Request Indicator */}
+        {pendingRequest && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                Edit request for <strong>"{pendingRequest.field_name}"</strong> is currently pending review by your Class Advisor.
+              </span>
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold text-[11px] uppercase tracking-wider shrink-0">
+              In Review
+            </span>
+          </div>
+        )}
+
+        {/* Institutional Lock Information Banner */}
+        <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 text-slate-600 text-xs flex items-start gap-3">
+          <Lock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            <strong className="text-slate-900">Institutional Profile Security:</strong> All identity, academic, parent, and contact details are verified and locked. To change any information, click <strong>"Request Edit"</strong> or <strong>"Change Name"</strong> to receive an advisor-authorized edit window.
+          </p>
+        </div>
+
         {/* Profile Card Hero */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/60 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row items-center gap-6 z-10 text-center sm:text-left">
@@ -148,9 +296,15 @@ export default function StudentProfile() {
 
             <div>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{student.name}</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+                  <span>{student.name}</span>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                </h2>
                 <span className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 text-xs font-extrabold border border-purple-100">
                   {student.registerNumber}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                  🔒 Profile Locked
                 </span>
               </div>
 
@@ -168,9 +322,20 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          <div className="z-10 flex gap-4 w-full md:w-auto justify-center">
-            <GlassButton onClick={handleOpenEdit} variant="secondary" className="gap-2 text-xs">
-              <Edit3 className="w-3.5 h-3.5" /> Edit Information
+          <div className="z-10 flex gap-2 w-full md:w-auto justify-center flex-wrap">
+            <GlassButton
+              onClick={() => {
+                setPreselectedField({
+                  section: "Personal Details",
+                  field: "phone_number",
+                  currentValue: student.personal.phone,
+                });
+                setIsRequestModalOpen(true);
+              }}
+              className="gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Request Edit</span>
             </GlassButton>
           </div>
         </div>
@@ -583,6 +748,28 @@ export default function StudentProfile() {
           </div>
         </div>
       </GlassModal>
+
+      {/* Request Field Edit & Name Change Modal */}
+      <RequestEditModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        preselectedField={preselectedField}
+        onSuccess={(req) => {
+          showToastNotification(`Edit request for "${req.field_name}" submitted to Class Advisor.`);
+          fetchRequests();
+        }}
+      />
+
+      {/* Complete Profile Setup Modal */}
+      <CompleteProfileModal
+        isOpen={isCompleteProfileOpen}
+        onClose={() => setIsCompleteProfileOpen(false)}
+        onSuccess={() => {
+          showToastNotification("Profile completed and securely locked!");
+          refreshStudent();
+          fetchRequests();
+        }}
+      />
     </StudentLayout>
   );
 }

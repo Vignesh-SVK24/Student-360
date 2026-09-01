@@ -17,7 +17,10 @@ import {
   Code2,
   UserPlus,
   Calendar,
-  KeyRound
+  KeyRound,
+  Layers,
+  ShieldCheck,
+  BookOpen
 } from "lucide-react";
 import { mockStudents, type Student } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
@@ -25,17 +28,29 @@ import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileD
 import { AddStudentModal } from "../../components/faculty/AddStudentModal";
 import { TimetableModal } from "../../components/faculty/TimetableModal";
 import { GrantAccessModal } from "../../components/faculty/GrantAccessModal";
+import { CreateClassroomModal } from "../../components/faculty/CreateClassroomModal";
+import { ProfileRequestsModal } from "../../components/faculty/ProfileRequestsModal";
+import { useFacultyAuth } from "../../context/FacultyAuthContext";
+import { classroomApi, profileRequestApi, type Classroom } from "../../services/apiClient";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
+  const { faculty } = useFacultyAuth();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedQuickStudent, setSelectedQuickStudent] = useState<Student | null>(null);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [isTimetableOpen, setIsTimetableOpen] = useState(false);
   const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+  const [isCreateClassroomOpen, setIsCreateClassroomOpen] = useState(false);
+  const [isProfileRequestsOpen, setIsProfileRequestsOpen] = useState(false);
   const [selectedAccessStudent, setSelectedAccessStudent] = useState<Student | null>(null);
   const [dashboardToast, setDashboardToast] = useState<string | null>(null);
+
+  const [myClassroom, setMyClassroom] = useState<Classroom | null>(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(0);
+
   const [studentsList, setStudentsList] = useState<Student[]>(() => {
     const custom = localStorage.getItem("s360_custom_students");
     if (custom) {
@@ -49,6 +64,57 @@ export default function FacultyDashboard() {
     return mockStudents;
   });
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const loadClassroomAndRequests = async () => {
+      try {
+        const res = await classroomApi.getMyClassroom();
+        if (res.success && res.data) {
+          setMyClassroom(res.data);
+          // If classroom has students returned, integrate them
+          if (res.data.students && res.data.students.length > 0) {
+            const mapped = res.data.students.map((s: any) => ({
+              id: String(s.id),
+              name: s.full_name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+              registerNumber: s.register_number,
+              department: "Artificial Intelligence & Data Science",
+              course: "B.Tech AI & Data Science",
+              year: s.year || "II",
+              section: s.section || "A",
+              cgpa: s.cgpa || 8.0,
+              attendance: s.attendance_percentage || 100,
+              image: s.profile_photo_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+              skills: s.skills || ["Python", "Machine Learning"],
+              topAchievement: "Enrolled in Classroom",
+              email: s.email,
+              phone: s.phone_number,
+              residenceType: s.student_type || "Day Scholar",
+            }));
+            setStudentsList(prev => {
+              const existingRegs = new Set(prev.map(x => x.registerNumber));
+              const newOnly = mapped.filter((x: any) => !existingRegs.has(x.registerNumber));
+              return [...newOnly, ...prev];
+            });
+          }
+
+          // Fetch pending requests for this classroom
+          const reqRes = await profileRequestApi.getClassroomRequests(res.data.id, "PENDING");
+          if (reqRes.success && reqRes.data) {
+            setPendingRequestsCount(reqRes.data.length);
+          }
+        } else {
+          // Check general requests
+          const reqRes = await profileRequestApi.getMyRequests();
+          if (reqRes.success && reqRes.data) {
+            setPendingRequestsCount(reqRes.data.filter(r => r.status === "PENDING").length);
+          }
+        }
+      } catch {
+        // Ignore fallback
+      }
+    };
+    loadClassroomAndRequests();
+  }, []);
 
   const handleStudentAdded = (apiStudent: any) => {
     const formatted: Student = {
@@ -244,6 +310,35 @@ export default function FacultyDashboard() {
 
           {/* Right Profile & Notifications */}
           <div className="flex items-center gap-3">
+            {/* Top Navbar Role Badge */}
+            <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0d4933]/10 text-[#0d4933] border border-[#629176]/30">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#629176]" />
+              <span>
+                {faculty.assigned_role === "HOD" && "HOD"}
+                {faculty.assigned_role === "ASSOCIATE_PROFESSOR" && "Associate Professor"}
+                {faculty.assigned_role === "CLASS_ADVISOR" && "Class Advisor"}
+                {faculty.assigned_role === "CLASS_TUTOR" && "Class Tutor"}
+                {faculty.assigned_role === "SUBJECT_FACULTY" && "Subject Faculty"}
+                {!faculty.assigned_role && "Class Advisor"}
+              </span>
+            </span>
+
+            {/* Profile Requests Button with Badge */}
+            <button
+              type="button"
+              onClick={() => setIsProfileRequestsOpen(true)}
+              className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 shadow-sm transition-all cursor-pointer"
+              title="Review Student Profile Edit Requests"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#0d4933]" />
+              <span>Profile Approvals</span>
+              {pendingRequestsCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center animate-bounce shadow-sm">
+                  {pendingRequestsCount}
+                </span>
+              )}
+            </button>
+
             {/* Top Navbar Time Table Button */}
             <button
               type="button"
@@ -271,13 +366,49 @@ export default function FacultyDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Faculty Dashboard</h1>
-            <p className="text-slate-500 font-medium text-sm mt-1">Institutional academic monitoring & student 360 evaluation</p>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Faculty Dashboard</h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0d4933] text-white shadow-sm shadow-[#0d4933]/40">
+                {faculty.assigned_role === "HOD" && "👑 Head of Department"}
+                {faculty.assigned_role === "ASSOCIATE_PROFESSOR" && "🎓 Associate Professor"}
+                {faculty.assigned_role === "CLASS_ADVISOR" && "⭐ Class Advisor"}
+                {faculty.assigned_role === "CLASS_TUTOR" && "📋 Class Tutor"}
+                {faculty.assigned_role === "SUBJECT_FACULTY" && "📚 Subject Faculty"}
+                {!faculty.assigned_role && "⭐ Class Advisor"}
+              </span>
+            </div>
+            <p className="text-slate-500 font-medium text-sm">
+              Role-based student information, classroom management, timetable, and attendance portal
+            </p>
           </div>
+
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#629176]/15 text-[#0d4933] border border-[#629176]/30">
-              Semester VI • Active Term
-            </span>
+            {/* Create Classroom (Class Advisor & HOD) */}
+            {(faculty.assigned_role === "CLASS_ADVISOR" || faculty.assigned_role === "HOD" || !faculty.assigned_role) && (
+              <button
+                type="button"
+                onClick={() => setIsCreateClassroomOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <Layers className="w-4 h-4 text-[#0d4933]" />
+                <span>Create Classroom</span>
+              </button>
+            )}
+
+            {/* Profile Edit Approvals Modal */}
+            <button
+              type="button"
+              onClick={() => setIsProfileRequestsOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold shadow-sm transition-all cursor-pointer relative"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-600" />
+              <span>Review Requests</span>
+              {pendingRequestsCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">
+                  {pendingRequestsCount}
+                </span>
+              )}
+            </button>
 
             {/* Prominent Header Time Table Button */}
             <button
@@ -293,11 +424,59 @@ export default function FacultyDashboard() {
             <button
               type="button"
               onClick={() => setIsAddStudentOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold shadow-sm transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0d4933] hover:bg-[#042821] text-white text-xs font-bold shadow-md shadow-[#0d4933]/30 transition-all cursor-pointer"
             >
-              <UserPlus className="w-4 h-4 text-[#0d4933]" />
+              <UserPlus className="w-4 h-4 text-emerald-300" />
               <span>Add Student</span>
             </button>
+          </div>
+        </div>
+
+        {/* Managed Classroom Card */}
+        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#042821]/90 via-[#0d4933]/90 to-[#629176]/90 text-white shadow-xl relative overflow-hidden backdrop-blur-xl border border-white/10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-mono font-bold uppercase tracking-wider border border-emerald-400/30">
+                  {myClassroom?.class_code || "CLS-AIML-IIA"}
+                </span>
+                <span className="text-xs text-emerald-200 font-semibold">
+                  Academic Year {myClassroom?.academic_year || "2025-2026"} • Sem {myClassroom?.semester || 3}
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-emerald-300" />
+                <span>{myClassroom?.class_name || "B.Tech Artificial Intelligence & Data Science - Year II (Sec A)"}</span>
+              </h2>
+              <p className="text-xs text-slate-300 flex items-center gap-4 flex-wrap pt-1">
+                <span><strong>Advisor:</strong> {myClassroom?.advisor_name || faculty.name}</span>
+                <span>•</span>
+                <span><strong>Tutor:</strong> {myClassroom?.tutor_name || "Assigned Faculty Tutor"}</span>
+                <span>•</span>
+                <span><strong>Enrolled:</strong> {studentsList.length} Active Students</span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsTimetableOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
+              >
+                <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Manage Timetable</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddStudentOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Quick Add Student</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -671,6 +850,32 @@ export default function FacultyDashboard() {
           );
           setTimeout(() => setDashboardToast(null), 4000);
         }}
+      />
+
+      {/* Classroom Creation Modal */}
+      <CreateClassroomModal
+        isOpen={isCreateClassroomOpen}
+        onClose={() => setIsCreateClassroomOpen(false)}
+        onSuccess={(newClassroom) => {
+          setMyClassroom(newClassroom);
+          setDashboardToast(`Classroom "${newClassroom.class_name}" successfully created!`);
+          setTimeout(() => setDashboardToast(null), 4000);
+        }}
+      />
+
+      {/* Student Profile Requests & Approvals Modal */}
+      <ProfileRequestsModal
+        isOpen={isProfileRequestsOpen}
+        onClose={() => {
+          setIsProfileRequestsOpen(false);
+          // Refresh pending count
+          if (myClassroom?.id) {
+            profileRequestApi.getClassroomRequests(myClassroom.id, "PENDING").then(res => {
+              if (res.success && res.data) setPendingRequestsCount(res.data.length);
+            });
+          }
+        }}
+        classroomId={myClassroom?.id}
       />
 
       {/* Dashboard Toast Banner */}

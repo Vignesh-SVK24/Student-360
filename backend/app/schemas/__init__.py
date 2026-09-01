@@ -55,8 +55,29 @@ from app.schemas.project import (
     ProjectUpdate,
     ProjectResponse,
 )
-from app.schemas.profile_link import ProfileLinkCreate, ProfileLinkUpdate, ProfileLinkResponse
-from app.schemas.remark import FacultyRemarkCreate, FacultyRemarkUpdate, FacultyRemarkResponse
+from app.schemas.classroom import (
+    ClassroomBase,
+    ClassroomCreate,
+    ClassroomUpdate,
+    ClassroomResponse,
+    ClassroomDetailResponse,
+)
+from app.schemas.profile_request import (
+    ProfileEditRequestCreate,
+    ProfileEditRequestReview,
+    ProfileEditRequestResponse,
+    StudentEditPermissionResponse,
+    ApprovedFieldUpdate,
+    StudentNameChangeRequestSubmit,
+)
+from app.schemas.timetable import (
+    TimetableSlotBase,
+    TimetableSlotUpdate,
+    TimetableSlotResponse,
+    DayTimetable,
+    WeeklyTimetableResponse,
+    PeriodCreate,
+)
 
 __all__ = [
     "ApiResponse",
@@ -82,6 +103,23 @@ __all__ = [
     "FacultyCreate",
     "FacultyUpdate",
     "FacultyResponse",
+    "ClassroomBase",
+    "ClassroomCreate",
+    "ClassroomUpdate",
+    "ClassroomResponse",
+    "ClassroomDetailResponse",
+    "ProfileEditRequestCreate",
+    "ProfileEditRequestReview",
+    "ProfileEditRequestResponse",
+    "StudentEditPermissionResponse",
+    "ApprovedFieldUpdate",
+    "StudentNameChangeRequestSubmit",
+    "TimetableSlotBase",
+    "TimetableSlotUpdate",
+    "TimetableSlotResponse",
+    "DayTimetable",
+    "WeeklyTimetableResponse",
+    "PeriodCreate",
     "AcademicBackgroundCreate",
     "AcademicBackgroundUpdate",
     "AcademicBackgroundResponse",

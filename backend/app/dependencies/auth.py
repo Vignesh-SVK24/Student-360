@@ -79,6 +79,38 @@ def get_current_faculty(
     return faculty
 
 
+def require_faculty_roles(allowed_faculty_roles: List[str]):
+    """Enforce specific Faculty assigned roles (e.g. CLASS_ADVISOR, HOD, SUBJECT_FACULTY)."""
+    def role_checker(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> Faculty:
+        if current_user.role == UserRole.ADMIN.value:
+            faculty_repo = FacultyRepository(db)
+            faculty = faculty_repo.get_by_user_id(current_user.id)
+            if faculty:
+                return faculty
+            # Dummy or generic faculty representation for admin
+            raise ForbiddenException("Admin has no linked faculty record", "NO_FACULTY_RECORD")
+
+        if current_user.role != UserRole.FACULTY.value:
+            raise ForbiddenException("Access denied: Faculty account required", "FORBIDDEN_FACULTY_REQUIRED")
+
+        faculty_repo = FacultyRepository(db)
+        faculty = faculty_repo.get_by_user_id(current_user.id)
+        if not faculty:
+            raise NotFoundException("Faculty profile not found", "FACULTY_NOT_FOUND")
+
+        if faculty.assigned_role not in allowed_faculty_roles:
+            raise ForbiddenException(
+                f"Access denied: Required role '{', '.join(allowed_faculty_roles)}', but faculty assigned role is '{faculty.assigned_role}'",
+                "FORBIDDEN_FACULTY_ROLE",
+            )
+        return faculty
+
+    return role_checker
+
+
 def verify_student_access(
     student_id: int,
     current_user: User = Depends(get_current_user),
@@ -89,4 +121,4 @@ def verify_student_access(
         student_repo = StudentRepository(db)
         student = student_repo.get_by_user_id(current_user.id)
         if not student or student.id != student_id:
-            raise ForbiddenException("Access denied: You can only access your own student profile", "FORBIDDEN_STUDENT_ACCESS")
+            raise ForbiddenException("Access denied: You can only access your own student profile", "FORBIDDEN_STUDENT_ACCESS")
