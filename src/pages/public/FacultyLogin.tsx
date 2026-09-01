@@ -55,14 +55,6 @@ export default function FacultyLogin() {
   const [forgotStatus, setForgotStatus] = useState<string | null>(null);
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  const FACULTY_ROLES = [
-    { label: "Class Advisor", value: "CLASS_ADVISOR", desc: "Create classroom, add students & approve profile edit requests" },
-    { label: "Class Tutor", value: "CLASS_TUTOR", desc: "Manage students, mentor profile updates & assist advisor" },
-    { label: "HOD", value: "HOD", desc: "Full department classroom oversight & curriculum monitoring" },
-    { label: "Associate Professor", value: "ASSOCIATE_PROFESSOR", desc: "Senior academic evaluations & department reviews" },
-    { label: "Subject Faculty", value: "SUBJECT_FACULTY", desc: "Timetable-based attendance & subject evaluation" },
-  ];
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
@@ -199,32 +191,63 @@ export default function FacultyLogin() {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              {/* Role Selection UX Indicator */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
-                  Select Faculty Role
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 p-1 bg-white/[0.03] border border-white/10 rounded-2xl">
-                  {FACULTY_ROLES.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => setSelectedRole(r.label)}
-                      className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer ${
-                        selectedRole === r.label
-                          ? "bg-gradient-to-r from-[#0d4933] to-[#629176] text-white shadow-md shadow-[#0d4933]/50"
-                          : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
+            <form onSubmit={handleLogin} className="space-y-5">
+              {/* Step 1: Role Selection UX Component */}
+              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-extrabold text-[#629176] uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span>Step 1: Select Your Faculty Role</span>
+                  </label>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Role-Based Access Control
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1.5 italic">
-                  <span className="text-[#629176] font-semibold">ℹ️ {selectedRole}:</span>
-                  {FACULTY_ROLES.find(r => r.label === selectedRole)?.desc}
-                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { label: "Class Advisor", value: "CLASS_ADVISOR", icon: "⭐", demoId: "FAC-AIML-01", desc: "Creates classrooms, registers students & approves profile edit requests" },
+                    { label: "Class Tutor", value: "CLASS_TUTOR", icon: "📋", demoId: "FAC-TUTOR-01", desc: "Manages student cohorts, reviews attendance & mentors students" },
+                    { label: "HOD", value: "HOD", icon: "👑", demoId: "HOD-AIML-01", desc: "Head of Department — Full departmental & classroom oversight" },
+                    { label: "Associate Professor", value: "ASSOCIATE_PROFESSOR", icon: "🎓", demoId: "FAC-ASSOC-01", desc: "Senior academic evaluations & department reviews" },
+                    { label: "Subject Faculty", value: "SUBJECT_FACULTY", icon: "📚", demoId: "FAC-SUBJ-01", desc: "Timetable-scoped attendance taking & course evaluations" },
+                  ].map((r) => {
+                    const isSelected = selectedRole === r.label;
+                    return (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => {
+                          setSelectedRole(r.label);
+                          setIdentifier(r.demoId);
+                        }}
+                        className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer flex items-center gap-2 ${
+                          isSelected
+                            ? "bg-gradient-to-r from-[#0d4933] to-[#629176] text-white shadow-lg shadow-[#0d4933]/50 border border-emerald-400/40"
+                            : "bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/5"
+                        }`}
+                      >
+                        <span className="text-base">{r.icon}</span>
+                        <span className="truncate">{r.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 text-xs flex items-start gap-2">
+                  <span className="text-sm">💡</span>
+                  <p className="leading-relaxed">
+                    <strong>{selectedRole}:</strong> {
+                      [
+                        { label: "Class Advisor", desc: "Authorized to create classrooms, enroll students & approve 24-hour profile edit permissions." },
+                        { label: "Class Tutor", desc: "Authorized to mentor student cohorts & monitor daily attendance status." },
+                        { label: "HOD", desc: "Head of Department — Full administrative authority across all departmental classrooms and faculty." },
+                        { label: "Associate Professor", desc: "Senior faculty member — Conducts academic appraisals & department reviews." },
+                        { label: "Subject Faculty", desc: "Authorized to mark timetable-based period attendance (Present / Absent / OD)." },
+                      ].find(r => r.label === selectedRole)?.desc
+                    }
+                  </p>
+                </div>
               </div>
 
               <div>
