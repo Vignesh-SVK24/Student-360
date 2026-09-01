@@ -14,7 +14,9 @@ import {
   X,
   UserPlus,
   KeyRound,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
 import { useFacultyAuth } from "../../context/FacultyAuthContext";
@@ -192,47 +194,86 @@ export default function FacultyLogin() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
-              {/* Step 1: Role Selection UX Component */}
-              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2.5">
+              {/* Step 1: Role Scroll Select Component */}
+              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-extrabold text-[#629176] uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <span>Step 1: Select Your Faculty Role</span>
                   </label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    Role-Based Access Control
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const container = document.getElementById("role-scroll-container");
+                        if (container) container.scrollBy({ left: -140, behavior: "smooth" });
+                      }}
+                      className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                      title="Scroll Left"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const container = document.getElementById("role-scroll-container");
+                        if (container) container.scrollBy({ left: 140, behavior: "smooth" });
+                      }}
+                      className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                      title="Scroll Right"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Scroll Select
+                    </span>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {/* Horizontal Scroll Selector Track */}
+                <div
+                  id="role-scroll-container"
+                  className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1 scroll-smooth snap-x touch-pan-x custom-scrollbar"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "#0d4933 #1e293b" }}
+                >
                   {[
-                    { label: "Class Advisor", value: "CLASS_ADVISOR", icon: "⭐", demoId: "FAC-AIML-01", desc: "Creates classrooms, registers students & approves profile edit requests" },
-                    { label: "Class Tutor", value: "CLASS_TUTOR", icon: "📋", demoId: "FAC-TUTOR-01", desc: "Manages student cohorts, reviews attendance & mentors students" },
-                    { label: "HOD", value: "HOD", icon: "👑", demoId: "HOD-AIML-01", desc: "Head of Department — Full departmental & classroom oversight" },
-                    { label: "Associate Professor", value: "ASSOCIATE_PROFESSOR", icon: "🎓", demoId: "FAC-ASSOC-01", desc: "Senior academic evaluations & department reviews" },
-                    { label: "Subject Faculty", value: "SUBJECT_FACULTY", icon: "📚", demoId: "FAC-SUBJ-01", desc: "Timetable-scoped attendance taking & course evaluations" },
+                    { label: "Class Advisor", value: "CLASS_ADVISOR", icon: "⭐", desc: "Creates classrooms, registers students & approves profile edit requests" },
+                    { label: "Class Tutor", value: "CLASS_TUTOR", icon: "📋", desc: "Manages student cohorts, reviews attendance & mentors students" },
+                    { label: "HOD", value: "HOD", icon: "👑", desc: "Head of Department — Full departmental & classroom oversight" },
+                    { label: "Associate Professor", value: "ASSOCIATE_PROFESSOR", icon: "🎓", desc: "Senior academic evaluations & department reviews" },
+                    { label: "Subject Faculty", value: "SUBJECT_FACULTY", icon: "📚", desc: "Timetable-scoped attendance taking & course evaluations" },
                   ].map((r) => {
                     const isSelected = selectedRole === r.label;
                     return (
                       <button
                         key={r.value}
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
                           setSelectedRole(r.label);
+                          e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                         }}
-                        className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer flex items-center gap-2 ${
+                        className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shrink-0 cursor-pointer snap-center flex items-center gap-2.5 border ${
                           isSelected
-                            ? "bg-gradient-to-r from-[#0d4933] to-[#629176] text-white shadow-lg shadow-[#0d4933]/50 border border-emerald-400/40"
-                            : "bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/5"
+                            ? "bg-gradient-to-r from-[#0d4933] to-[#629176] text-white shadow-lg shadow-[#0d4933]/60 border-emerald-400/60 scale-[1.02] ring-2 ring-emerald-500/30"
+                            : "bg-slate-800/60 hover:bg-slate-800 text-slate-300 border-white/10 hover:border-slate-600"
                         }`}
                       >
-                        <span className="text-base">{r.icon}</span>
-                        <span className="truncate">{r.label}</span>
+                        <span className="text-lg">{r.icon}</span>
+                        <div className="text-left">
+                          <span className="block font-bold tracking-tight whitespace-nowrap">{r.label}</span>
+                          <span className={`text-[10px] block font-normal whitespace-nowrap ${isSelected ? "text-emerald-200" : "text-slate-400"}`}>
+                            {r.value}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse ml-1"></span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
 
+                {/* Selected Role Description Box */}
                 <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 text-xs flex items-start gap-2">
                   <span className="text-sm">💡</span>
                   <p className="leading-relaxed">
