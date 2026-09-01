@@ -214,15 +214,17 @@ class ProfileRequestService:
         data: ApprovedFieldUpdate,
     ) -> Student:
         now = datetime.utcnow()
-        # Find active permission for this field
+        # Find active permission for this field or entire profile
         perm = self.db.query(StudentEditPermission).filter(
             StudentEditPermission.student_id == student.id,
-            StudentEditPermission.field_name == data.field_name,
             StudentEditPermission.status == "ACTIVE",
             StudentEditPermission.expires_at > now,
+        ).filter(
+            (StudentEditPermission.field_name == data.field_name) |
+            (StudentEditPermission.field_name.in_(["MY_PROFILE", "ALL"]))
         ).first()
 
-        if not perm:
+        if not perm and student.is_locked:
             raise ForbiddenException(
                 f"Field '{data.field_name}' is locked. No active approved edit permission found.",
                 "FIELD_LOCKED_PERMISSION_REQUIRED",
@@ -268,6 +270,127 @@ class ProfileRequestService:
         self.db.commit()
         self.db.refresh(student)
         return student
+
+    def apply_approved_profile_update(
+        self,
+        student: Student,
+        profile_data: dict,
+    ) -> Student:
+        """Update entire student profile when active permission for MY_PROFILE / ALL exists, then re-lock."""
+        now = datetime.utcnow()
+        perm = self.db.query(StudentEditPermission).filter(
+            StudentEditPermission.student_id == student.id,
+            StudentEditPermission.status == "ACTIVE",
+            StudentEditPermission.expires_at > now,
+        ).filter(
+            StudentEditPermission.field_name.in_(["MY_PROFILE", "ALL"])
+        ).first()
+
+        if not perm and student.is_locked:
+            raise ForbiddenException(
+                "Profile is locked. No active approved permission found to edit 'MY PROFILE'.",
+                "PROFILE_LOCKED_PERMISSION_REQUIRED",
+            )
+
+        # Personal details
+        if profile_data.get("first_name"):
+            student.first_name = profile_data["first_name"].strip()
+        if profile_data.get("last_name"):
+            student.last_name = profile_data["last_name"].strip()
+        if profile_data.get("name") or profile_data.get("full_name"):
+            full = (profile_data.get("full_name") or profile_data.get("name") or "").strip()
+            student.full_name = full
+            parts = full.split(" ", 1)
+            student.first_name = parts[0]
+            student.last_name = parts[1] if len(parts) > 1 else parts[0]
+
+        if profile_data.get("email"):
+            student.email = profile_data["email"].strip()
+        if profile_data.get("phone") or profile_data.get("phone_number"):
+            student.phone_number = (profile_data.get("phone_number") or profile_data.get("phone") or "").strip()
+        if profile_data.get("address"):
+            student.address = profile_data["address"].strip()
+        if profile_data.get("gender"):
+            student.gender = profile_data["gender"]
+        if profile_data.get("residenceType") or profile_data.get("student_type"):
+            student.student_type = profile_data.get("student_type") or profile_data.get("residenceType")
+        if profile_data.get("dob") or profile_data.get("date_of_birth"):
+            val = profile_data.get("date_of_birth") or profile_data.get("dob")
+            try:
+                from datetime import datetime as dt
+                if isinstance(val, str):
+                    student.date_of_birth = dt.strptime(val, "%Y-%m-%d").date()
+                else:
+                    student.date_of_birth = val
+            except Exception:
+                pass
+
+        # Parent details
+        p_name = profile_data.get("parentName") or profile_data.get("parent_name")
+        if p_name:
+            guardian = student.guardians[0] if student.guardians else None
+            if not guardian:
+                from app.models.guardian import Guardian
+                guardian = Guardian(
+                    student_id=student.id,
+                    parent_name=p_name.strip(),
+                    relationship=profile_data.get("parentRelationship") or profile_data.get("parent_relationship") or "Father",
+                    phone_number=profile_data.get("parentContact") or profile_data.get("parent_phone") or "N/A",
+                    email=profile_data.get("parentEmail") or profile_data.get("parent_email"),
+                    occupation=profile_data.get("parentOccupation") or profile_data.get("parent_occupation"),
+                )
+                self.db.add(guardian)
+            else:
+                guardian.parent_name = p_name.strip()
+                if profile_data.get("parentRelationship") or profile_data.get("parent_relationship"):
+                    guardian.relationship = profile_data.get("parentRelationship") or profile_data.get("parent_relationship")
+                if profile_data.get("parentContact") or profile_data.get("parent_phone"):
+                    guardian.phone_number = (profile_data.get("parentContact") or profile_data.get("parent_phone") or "").strip()
+                if profile_data.get("parentEmail") or profile_data.get("parent_email"):
+                    guardian.email = (profile_data.get("parentEmail") or profile_data.get("parent_email") or "").strip()
+                if profile_data.get("parentOccupation") or profile_data.get("parent_occupation"):
+                    guardian.occupation = profile_data.get("parentOccupation") or profile_data.get("parent_occupation")
+
+        # Profile Links
+        from app.models.profile_link import ProfileLink
+        links = {
+            "GitHub": profile_data.get("github"),
+            "LinkedIn": profile_data.get("linkedin"),
+            "Portfolio": profile_data.get("portfolio"),
+        }
+        for platform, url in links.items():
+            if url:
+                existing_link = self.db.query(ProfileLink).filter(
+                    ProfileLink.student_id == student.id,
+                    ProfileLink.platform == platform
+                ).first()
+                if existing_link:
+                    existing_link.url = url.strip()
+                else:
+                    self.db.add(ProfileLink(student_id=student.id, platform=platform, url=url.strip(), is_public=True))
+
+        # Mark permission as USED and re-lock
+        if perm:
+            perm.status = "USED"
+            req = self.db.query(ProfileEditRequest).filter(ProfileEditRequest.id == perm.request_id).first()
+            if req:
+                req.status = EditRequestStatus.USED.value
+
+        student.profile_status = ProfileCompletionStatus.LOCKED.value
+        student.is_locked = True
+
+        self.audit.log(
+            action=AuditAction.UPDATE.value,
+            actor_type=AuditActorType.STUDENT.value,
+            actor_id=student.register_number,
+            entity_type="Student",
+            entity_id=str(student.id),
+            new_data={"action": "full_profile_update", "relocked": True},
+        )
+        self.db.commit()
+        self.db.refresh(student)
+        return student
+
 
     def complete_student_profile(
         self,

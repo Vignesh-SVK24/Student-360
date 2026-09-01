@@ -15,7 +15,7 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { Toast } from "../../components/ui/Toast";
 import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
-import { projectService } from "../../services/studentData";
+import { projectApi } from "../../services/apiClient";
 import type { ProjectItem } from "../../types/student";
 
 export default function Projects() {
@@ -96,25 +96,57 @@ export default function Projects() {
     };
 
     if (editingId) {
-      const current = student.projects.find((p) => p.id === editingId);
-      if (current) {
-        Object.assign(current, payload);
+      const res = await projectApi.update(Number(editingId), {
+        title: payload.title,
+        short_description: payload.shortDescription,
+        detailed_description: payload.detailedDescription,
+        technology_names: payload.technologies,
+        student_role: payload.role,
+        start_date: payload.startDate || undefined,
+        end_date: payload.endDate || undefined,
+        github_url: payload.githubUrl,
+        live_demo_url: payload.demoUrl,
+        project_image_url: payload.image,
+      });
+      if (res.success) {
+        showToast("Project updated successfully!");
+      } else {
+        showToast(res.error || "Failed to update project");
       }
-      showToast("Project updated successfully!");
     } else {
-      await projectService.add(payload);
-      showToast("Project created successfully!");
+      const res = await projectApi.create({
+        student_id: Number(student.id),
+        title: payload.title,
+        short_description: payload.shortDescription,
+        detailed_description: payload.detailedDescription,
+        technology_names: payload.technologies,
+        student_role: payload.role,
+        start_date: payload.startDate || undefined,
+        end_date: payload.endDate || undefined,
+        github_url: payload.githubUrl,
+        live_demo_url: payload.demoUrl,
+        project_image_url: payload.image,
+      });
+      if (res.success) {
+        showToast("Project created successfully!");
+      } else {
+        showToast(res.error || "Failed to create project");
+      }
     }
-    refreshStudent();
+    await refreshStudent();
     setIsDrawerOpen(false);
   };
 
   const confirmDelete = async () => {
     if (deleteModalId) {
-      await projectService.delete(deleteModalId);
-      refreshStudent();
+      const res = await projectApi.delete(Number(deleteModalId));
+      if (res.success) {
+        showToast("Project deleted.");
+      } else {
+        showToast(res.error || "Failed to delete");
+      }
+      await refreshStudent();
       setDeleteModalId(null);
-      showToast("Project deleted.");
     }
   };
 

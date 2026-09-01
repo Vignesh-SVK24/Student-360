@@ -84,6 +84,21 @@ def apply_approved_field_edit(
     )
 
 
+@router.patch("/students/me/approved-profile", response_model=ApiResponse[StudentResponse])
+def apply_approved_profile_edit(
+    profile_data: dict,
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db),
+):
+    """Update all fields of student profile upon approved MY_PROFILE permission and automatically re-lock."""
+    service = ProfileRequestService(db)
+    updated = service.apply_approved_profile_update(current_student, profile_data)
+    return ApiResponse.success_response(
+        data=StudentResponse.model_validate(updated),
+        message="Profile updated successfully and re-locked",
+    )
+
+
 @router.post("/students/me/complete-profile", response_model=ApiResponse[StudentResponse])
 def complete_profile(
     profile_data: dict,

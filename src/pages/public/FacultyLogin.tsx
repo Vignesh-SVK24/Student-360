@@ -25,8 +25,8 @@ export default function FacultyLogin() {
   const { login, register } = useFacultyAuth();
 
   const [selectedRole, setSelectedRole] = useState("Class Advisor");
-  const [identifier, setIdentifier] = useState("FAC-AIML-01");
-  const [password, setPassword] = useState("Faculty@360");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -219,7 +219,6 @@ export default function FacultyLogin() {
                         type="button"
                         onClick={() => {
                           setSelectedRole(r.label);
-                          setIdentifier(r.demoId);
                         }}
                         className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer flex items-center gap-2 ${
                           isSelected

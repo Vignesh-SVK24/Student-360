@@ -188,16 +188,25 @@ export function ProfileRequestsModal({ isOpen, onClose, classroomId }: ProfileRe
                   {/* Details Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-xl bg-slate-950/40 border border-white/5 text-xs mb-3">
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Target Field</span>
-                      <span className="text-white font-semibold font-mono text-[11px]">{req.field_name}</span>
-                      <span className="text-slate-500 text-[10px] block">({req.section_name})</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Scope of Modification</span>
+                      {req.field_name === "MY_PROFILE" ? (
+                        <span className="text-amber-300 font-extrabold text-[11px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 inline-flex items-center gap-1">
+                          <Unlock className="w-3 h-3 text-amber-400" />
+                          Entire "MY PROFILE" Dossier
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-white font-semibold font-mono text-[11px]">{req.field_name}</span>
+                          <span className="text-slate-500 text-[10px] block">({req.section_name})</span>
+                        </>
+                      )}
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Current Value</span>
-                      <span className="text-slate-400 font-medium">{req.current_value || "—"}</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Current State</span>
+                      <span className="text-slate-400 font-medium">{req.current_value || "Locked"}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Requested Value</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Permission Requested</span>
                       <span className="text-emerald-300 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
                         {req.requested_value}
                       </span>

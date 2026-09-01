@@ -8,15 +8,15 @@ export interface FacultyProfile {
   email: string;
   department: string;
   designation: string;
-  assigned_role?: string;
+  assigned_role: string;
   profilePhoto?: string;
 }
 
-const DEFAULT_FACULTY: FacultyProfile = {
+export const DEFAULT_EMPTY_FACULTY: FacultyProfile = {
   id: 1,
   facultyId: "FAC-AIML-01",
-  name: "Dr. S. Ramanujam",
-  email: "ramanujam.s@college.edu",
+  name: "Faculty Member",
+  email: "faculty@college.edu",
   department: "Artificial Intelligence & Data Science",
   designation: "Class Advisor & Professor",
   assigned_role: "CLASS_ADVISOR",
@@ -45,10 +45,7 @@ interface FacultyAuthContextType {
 const FacultyAuthContext = createContext<FacultyAuthContextType | undefined>(undefined);
 
 export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [faculty, setFaculty] = useState<FacultyProfile>(() => {
-    const saved = localStorage.getItem("s360_faculty_profile");
-    return saved ? JSON.parse(saved) : DEFAULT_FACULTY;
-  });
+  const [faculty, setFaculty] = useState<FacultyProfile>(DEFAULT_EMPTY_FACULTY);
   const [user, setUser] = useState<UserSession | null>(tokenStorage.getUser());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!tokenStorage.getAccessToken());
   const [isLoading, setIsLoading] = useState<boolean>(!!tokenStorage.getAccessToken());
@@ -73,12 +70,11 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
             name: res.data.name || "Faculty Member",
             email: res.data.email,
             department: res.data.department_name || "Artificial Intelligence & Data Science",
-            designation: "Faculty Mentor",
+            designation: "Class Advisor & Professor",
             assigned_role: res.data.assigned_role || "CLASS_ADVISOR",
-            profilePhoto: res.data.profile_photo_url || DEFAULT_FACULTY.profilePhoto,
+            profilePhoto: res.data.profile_photo_url || DEFAULT_EMPTY_FACULTY.profilePhoto,
           };
           setFaculty(updated);
-          localStorage.setItem("s360_faculty_profile", JSON.stringify(updated));
         }
       } finally {
         setIsLoading(false);
@@ -98,21 +94,11 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         name: res.data.user.name || "Faculty Member",
         email: res.data.user.email,
         department: res.data.user.department_name || "Department of AI & Data Science",
-        designation: "Faculty Mentor",
+        designation: "Class Advisor & Professor",
         assigned_role: res.data.user.assigned_role || "CLASS_ADVISOR",
-        profilePhoto: res.data.user.profile_photo_url || DEFAULT_FACULTY.profilePhoto,
+        profilePhoto: res.data.user.profile_photo_url || DEFAULT_EMPTY_FACULTY.profilePhoto,
       };
       setFaculty(updated);
-      localStorage.setItem("s360_faculty_profile", JSON.stringify(updated));
-      return { success: true };
-    }
-
-    // Fallback: demo credentials check for offline/standalone mode
-    if (
-      (identifier === "FAC-AIML-01" || identifier === "ramanujam.s@college.edu" || identifier === "prof.sarah@college.edu") &&
-      (pass === "Faculty@360" || pass === "faculty123")
-    ) {
-      setIsAuthenticated(true);
       return { success: true };
     }
 
@@ -135,9 +121,9 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         department: "Department of AI & Data Science",
         designation: data.designation || "Assistant Professor",
         assigned_role: data.assigned_role || "CLASS_ADVISOR",
+        profilePhoto: DEFAULT_EMPTY_FACULTY.profilePhoto,
       };
       setFaculty(updated);
-      localStorage.setItem("s360_faculty_profile", JSON.stringify(updated));
       return { success: true };
     }
     return { success: false, error: res.error || "Registration failed" };
@@ -146,8 +132,8 @@ export const FacultyAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const logout = async () => {
     await authApi.logout();
     setUser(null);
+    setFaculty(DEFAULT_EMPTY_FACULTY);
     setIsAuthenticated(false);
-    localStorage.removeItem("s360_faculty_profile");
   };
 
   return (

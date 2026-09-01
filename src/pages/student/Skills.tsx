@@ -16,7 +16,7 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { Toast } from "../../components/ui/Toast";
 import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
-import { skillService } from "../../services/studentData";
+import { skillApi } from "../../services/apiClient";
 import type { SkillItem, SkillCategory, SkillProficiency } from "../../types/student";
 
 export default function Skills() {
@@ -65,22 +65,43 @@ export default function Skills() {
     if (!formData.name.trim()) return;
 
     if (editingId) {
-      await skillService.update(editingId, formData);
-      showToast("Skill updated successfully!");
+      const res = await skillApi.update(Number(editingId), {
+        name: formData.name,
+        category: formData.category,
+        proficiency_level: formData.proficiency,
+      });
+      if (res.success) {
+        showToast("Skill updated successfully!");
+      } else {
+        showToast(res.error || "Failed to update skill");
+      }
     } else {
-      await skillService.add(formData);
-      showToast("Skill added successfully!");
+      const res = await skillApi.create({
+        student_id: Number(student.id),
+        name: formData.name,
+        category: formData.category,
+        proficiency_level: formData.proficiency,
+      });
+      if (res.success) {
+        showToast("Skill added successfully!");
+      } else {
+        showToast(res.error || "Failed to add skill");
+      }
     }
-    refreshStudent();
+    await refreshStudent();
     setIsDrawerOpen(false);
   };
 
   const confirmDelete = async () => {
     if (deleteModalId) {
-      await skillService.delete(deleteModalId);
-      refreshStudent();
+      const res = await skillApi.delete(Number(deleteModalId));
+      if (res.success) {
+        showToast("Skill deleted.");
+      } else {
+        showToast(res.error || "Failed to delete");
+      }
+      await refreshStudent();
       setDeleteModalId(null);
-      showToast("Skill deleted.");
     }
   };
 

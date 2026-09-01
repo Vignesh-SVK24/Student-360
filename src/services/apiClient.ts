@@ -196,7 +196,7 @@ export const studentApi = {
   },
 
   getStudentAccess: async (studentId: number | string) => {
-    const res = await apiRequest<{
+    return await apiRequest<{
       student_id: number;
       user_id?: number;
       has_account: boolean;
@@ -206,53 +206,13 @@ export const studentApi = {
       status: string;
       last_login_at?: string;
     }>(`/students/${studentId}/access`);
-
-    if (res.success && res.data) {
-      return res;
-    }
-
-    // Local fallback for offline/gh-pages mode
-    const savedKey = `s360_student_access_${studentId}`;
-    const local = localStorage.getItem(savedKey);
-    if (local) {
-      return { success: true, data: JSON.parse(local) };
-    }
-
-    return {
-      success: true,
-      data: {
-        student_id: Number(studentId) || 1,
-        has_account: true,
-        username: `STUDENT-${studentId}`,
-        email: `student.${studentId}@college.edu`,
-        is_active: true,
-        status: "ACTIVE",
-      },
-    };
   },
 
   updateStudentAccess: async (studentId: number | string, payload: { is_active?: boolean; new_password?: string }) => {
-    const res = await apiRequest<any>(`/students/${studentId}/access`, {
+    return await apiRequest<any>(`/students/${studentId}/access`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-
-    if (res.success) {
-      return res;
-    }
-
-    // Fallback save in localStorage for static deployment
-    const savedKey = `s360_student_access_${studentId}`;
-    const mockData = {
-      student_id: Number(studentId) || 1,
-      has_account: true,
-      username: `STUDENT-${studentId}`,
-      email: `student.${studentId}@college.edu`,
-      is_active: payload.is_active ?? true,
-      status: payload.is_active ?? true ? "ACTIVE" : "INACTIVE",
-    };
-    localStorage.setItem(savedKey, JSON.stringify(mockData));
-    return { success: true, data: mockData };
   },
 };
 
@@ -323,185 +283,35 @@ export interface WeeklyTimetableResponse {
   days: DayTimetable[];
 }
 
-const DEFAULT_TIMETABLE_FALLBACK: WeeklyTimetableResponse = {
-  days: [
-    {
-      day: "Monday",
-      slots: [
-        { id: 1, day_of_week: "Monday", period_number: 1, start_time: "09:00 AM", end_time: "10:00 AM", subject_name: "Deep Learning Architectures", subject_code: "AI8401", room: "LH-301", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 2, day_of_week: "Monday", period_number: 2, start_time: "10:00 AM", end_time: "11:00 AM", subject_name: "Natural Language Processing", subject_code: "AI8402", room: "LH-301", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 3, day_of_week: "Monday", period_number: 3, start_time: "11:15 AM", end_time: "12:15 PM", subject_name: "Cloud & Distributed Systems", subject_code: "CS8403", room: "Lab 2", faculty_name: "Prof. M. Ramanujam" },
-        { id: 4, day_of_week: "Monday", period_number: 4, start_time: "12:15 PM", end_time: "01:15 PM", subject_name: "Machine Learning Lab", subject_code: "AI8411", room: "AI Computing Lab", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 5, day_of_week: "Monday", period_number: 5, start_time: "02:00 PM", end_time: "03:00 PM", subject_name: "Machine Learning Lab", subject_code: "AI8411", room: "AI Computing Lab", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 6, day_of_week: "Monday", period_number: 6, start_time: "03:00 PM", end_time: "04:00 PM", subject_name: "Engineering Optimization", subject_code: "MA8401", room: "LH-301", faculty_name: "Dr. R. Meenakshi" },
-        { id: 7, day_of_week: "Monday", period_number: 7, start_time: "04:00 PM", end_time: "04:50 PM", subject_name: "Mentorship & Project Guidance", subject_code: "MC8401", room: "Dept Seminar Hall", faculty_name: "All Faculty" },
-      ],
-    },
-    {
-      day: "Tuesday",
-      slots: [
-        { id: 8, day_of_week: "Tuesday", period_number: 1, start_time: "09:00 AM", end_time: "10:00 AM", subject_name: "Big Data Technologies", subject_code: "DS8401", room: "LH-302", faculty_name: "Dr. P. Rajesh" },
-        { id: 9, day_of_week: "Tuesday", period_number: 2, start_time: "10:00 AM", end_time: "11:00 AM", subject_name: "Deep Learning Architectures", subject_code: "AI8401", room: "LH-301", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 10, day_of_week: "Tuesday", period_number: 3, start_time: "11:15 AM", end_time: "12:15 PM", subject_name: "AI Ethics & Governance", subject_code: "AI8404", room: "LH-301", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 11, day_of_week: "Tuesday", period_number: 4, start_time: "12:15 PM", end_time: "01:15 PM", subject_name: "Computer Vision", subject_code: "AI8403", room: "LH-301", faculty_name: "Prof. M. Ramanujam" },
-        { id: 12, day_of_week: "Tuesday", period_number: 5, start_time: "02:00 PM", end_time: "03:00 PM", subject_name: "NLP & Speech Processing Lab", subject_code: "AI8412", room: "Language Lab", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 13, day_of_week: "Tuesday", period_number: 6, start_time: "03:00 PM", end_time: "04:00 PM", subject_name: "NLP & Speech Processing Lab", subject_code: "AI8412", room: "Language Lab", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 14, day_of_week: "Tuesday", period_number: 7, start_time: "04:00 PM", end_time: "04:50 PM", subject_name: "Technical Seminar", subject_code: "AI8413", room: "Dept Seminar Hall", faculty_name: "Prof. M. Ramanujam" },
-      ],
-    },
-    {
-      day: "Wednesday",
-      slots: [
-        { id: 15, day_of_week: "Wednesday", period_number: 1, start_time: "09:00 AM", end_time: "10:00 AM", subject_name: "Natural Language Processing", subject_code: "AI8402", room: "LH-301", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 16, day_of_week: "Wednesday", period_number: 2, start_time: "10:00 AM", end_time: "11:00 AM", subject_name: "Cloud & Distributed Systems", subject_code: "CS8403", room: "Lab 2", faculty_name: "Prof. M. Ramanujam" },
-        { id: 17, day_of_week: "Wednesday", period_number: 3, start_time: "11:15 AM", end_time: "12:15 PM", subject_name: "Computer Vision", subject_code: "AI8403", room: "LH-301", faculty_name: "Prof. M. Ramanujam" },
-        { id: 18, day_of_week: "Wednesday", period_number: 4, start_time: "12:15 PM", end_time: "01:15 PM", subject_name: "Big Data Technologies", subject_code: "DS8401", room: "LH-302", faculty_name: "Dr. P. Rajesh" },
-        { id: 19, day_of_week: "Wednesday", period_number: 5, start_time: "02:00 PM", end_time: "03:00 PM", subject_name: "Generative AI Research & Lab", subject_code: "AI8414", room: "Innovation Hub", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 20, day_of_week: "Wednesday", period_number: 6, start_time: "03:00 PM", end_time: "04:00 PM", subject_name: "Generative AI Research & Lab", subject_code: "AI8414", room: "Innovation Hub", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 21, day_of_week: "Wednesday", period_number: 7, start_time: "04:00 PM", end_time: "04:50 PM", subject_name: "Library / MOOC Study", subject_code: "MOOC84", room: "Central Digital Library", faculty_name: "Staff In-charge" },
-      ],
-    },
-    {
-      day: "Thursday",
-      slots: [
-        { id: 22, day_of_week: "Thursday", period_number: 1, start_time: "09:00 AM", end_time: "10:00 AM", subject_name: "Engineering Optimization", subject_code: "MA8401", room: "LH-301", faculty_name: "Dr. R. Meenakshi" },
-        { id: 23, day_of_week: "Thursday", period_number: 2, start_time: "10:00 AM", end_time: "11:00 AM", subject_name: "Deep Learning Architectures", subject_code: "AI8401", room: "LH-301", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 24, day_of_week: "Thursday", period_number: 3, start_time: "11:15 AM", end_time: "12:15 PM", subject_name: "Natural Language Processing", subject_code: "AI8402", room: "LH-301", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 25, day_of_week: "Thursday", period_number: 4, start_time: "12:15 PM", end_time: "01:15 PM", subject_name: "AI Ethics & Governance", subject_code: "AI8404", room: "LH-301", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 26, day_of_week: "Thursday", period_number: 5, start_time: "02:00 PM", end_time: "03:00 PM", subject_name: "Cloud Deployment Lab", subject_code: "CS8413", room: "Cloud Computing Center", faculty_name: "Prof. M. Ramanujam" },
-        { id: 27, day_of_week: "Thursday", period_number: 6, start_time: "03:00 PM", end_time: "04:00 PM", subject_name: "Cloud Deployment Lab", subject_code: "CS8413", room: "Cloud Computing Center", faculty_name: "Prof. M. Ramanujam" },
-        { id: 28, day_of_week: "Thursday", period_number: 7, start_time: "04:00 PM", end_time: "04:50 PM", subject_name: "Placement Aptitude & Coding", subject_code: "TP8401", room: "Auditorium", faculty_name: "Training Dept" },
-      ],
-    },
-    {
-      day: "Friday",
-      slots: [
-        { id: 29, day_of_week: "Friday", period_number: 1, start_time: "09:00 AM", end_time: "10:00 AM", subject_name: "Computer Vision", subject_code: "AI8403", room: "LH-301", faculty_name: "Prof. M. Ramanujam" },
-        { id: 30, day_of_week: "Friday", period_number: 2, start_time: "10:00 AM", end_time: "11:00 AM", subject_name: "Big Data Technologies", subject_code: "DS8401", room: "LH-302", faculty_name: "Dr. P. Rajesh" },
-        { id: 31, day_of_week: "Friday", period_number: 3, start_time: "11:15 AM", end_time: "12:15 PM", subject_name: "Cloud & Distributed Systems", subject_code: "CS8403", room: "Lab 2", faculty_name: "Prof. M. Ramanujam" },
-        { id: 32, day_of_week: "Friday", period_number: 4, start_time: "12:15 PM", end_time: "01:15 PM", subject_name: "Engineering Optimization", subject_code: "MA8401", room: "LH-301", faculty_name: "Dr. R. Meenakshi" },
-        { id: 33, day_of_week: "Friday", period_number: 5, start_time: "02:00 PM", end_time: "03:00 PM", subject_name: "Hackathon & Capstone Studio", subject_code: "PR8401", room: "Incubation Cell", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 34, day_of_week: "Friday", period_number: 6, start_time: "03:00 PM", end_time: "04:00 PM", subject_name: "Hackathon & Capstone Studio", subject_code: "PR8401", room: "Incubation Cell", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 35, day_of_week: "Friday", period_number: 7, start_time: "04:00 PM", end_time: "04:50 PM", subject_name: "Club & Extra-Curricular Activities", subject_code: "ECA84", room: "Campus Grounds", faculty_name: "Activity In-charge" },
-      ],
-    },
-    {
-      day: "Saturday",
-      slots: [
-        { id: 36, day_of_week: "Saturday", period_number: 1, start_time: "09:00 AM", end_time: "10:00 AM", subject_name: "Industry Expert Masterclass", subject_code: "IE8401", room: "Virtual Seminar Hall", faculty_name: "Guest Lecturer" },
-        { id: 37, day_of_week: "Saturday", period_number: 2, start_time: "10:00 AM", end_time: "11:00 AM", subject_name: "Applied Generative AI Workshop", subject_code: "WS8401", room: "AI Lab 1", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 38, day_of_week: "Saturday", period_number: 3, start_time: "11:15 AM", end_time: "12:15 PM", subject_name: "Applied Generative AI Workshop", subject_code: "WS8401", room: "AI Lab 1", faculty_name: "Dr. Sarah Jenkins" },
-        { id: 39, day_of_week: "Saturday", period_number: 4, start_time: "12:15 PM", end_time: "01:15 PM", subject_name: "Weekly Quiz & Skill Assessment", subject_code: "AS8401", room: "Exam Hall 2", faculty_name: "Dr. K. Senthil Nathan" },
-        { id: 40, day_of_week: "Saturday", period_number: 5, start_time: "02:00 PM", end_time: "03:00 PM", subject_name: "Open Source Contribution Hour", subject_code: "OS8401", room: "Open Computing Lab", faculty_name: "Prof. M. Ramanujam" },
-        { id: 41, day_of_week: "Saturday", period_number: 6, start_time: "03:00 PM", end_time: "04:00 PM", subject_name: "Remedial Coaching & Doubts Session", subject_code: "RC8401", room: "LH-301", faculty_name: "All Faculty" },
-        { id: 42, day_of_week: "Saturday", period_number: 7, start_time: "04:00 PM", end_time: "04:50 PM", subject_name: "Sports / Fitness / Yoga", subject_code: "PED84", room: "Sports Complex", faculty_name: "Physical Director" },
-      ],
-    },
-  ],
-};
-
 export const timetableApi = {
   getWeeklyTimetable: async () => {
-    const res = await apiRequest<WeeklyTimetableResponse>("/timetable");
-    if (res.success && res.data) {
-      return res;
-    }
-
-    // Fallback: load from localStorage or default
-    const saved = localStorage.getItem("s360_timetable_schedule");
-    if (saved) {
-      try {
-        return { success: true, data: JSON.parse(saved) };
-      } catch {
-        // use default
-      }
-    }
-    return { success: true, data: DEFAULT_TIMETABLE_FALLBACK };
+    return await apiRequest<WeeklyTimetableResponse>("/timetable");
   },
 
   updateSlot: async (slotId: number, payload: Partial<TimetableSlot>) => {
-    const res = await apiRequest<TimetableSlot>(`/timetable/slots/${slotId}`, {
+    return await apiRequest<TimetableSlot>(`/timetable/slots/${slotId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });
-
-    if (res.success && res.data) {
-      return res;
-    }
-
-    // Update in localStorage
-    const saved = localStorage.getItem("s360_timetable_schedule");
-    const current: WeeklyTimetableResponse = saved ? JSON.parse(saved) : DEFAULT_TIMETABLE_FALLBACK;
-    let foundSlot: TimetableSlot | null = null;
-    for (const d of current.days) {
-      for (let i = 0; i < d.slots.length; i++) {
-        if (d.slots[i].id === slotId) {
-          d.slots[i] = { ...d.slots[i], ...payload };
-          foundSlot = d.slots[i];
-          break;
-        }
-      }
-    }
-    localStorage.setItem("s360_timetable_schedule", JSON.stringify(current));
-    return { success: true, data: foundSlot ?? ({ id: slotId, ...payload } as any) };
   },
 
   addPeriod: async (payload: { start_time: string; end_time: string; subject_name?: string; entry_type?: string; classroom_id?: number }) => {
-    const res = await apiRequest<WeeklyTimetableResponse>("/timetable/periods", {
+    return await apiRequest<WeeklyTimetableResponse>("/timetable/periods", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    // Fallback: update local schedule
-    const saved = localStorage.getItem("s360_timetable_schedule");
-    const current: WeeklyTimetableResponse = saved ? JSON.parse(saved) : DEFAULT_TIMETABLE_FALLBACK;
-    const nextPeriod = (current.days[0]?.slots.length || 0) + 1;
-    current.days.forEach(d => {
-      d.slots.push({
-        id: Date.now() + Math.random(),
-        day_of_week: d.day,
-        period_number: nextPeriod,
-        start_time: payload.start_time,
-        end_time: payload.end_time,
-        subject_name: payload.subject_name || "Free Period",
-        entry_type: (payload.entry_type as any) || "SUBJECT",
-      });
-    });
-    localStorage.setItem("s360_timetable_schedule", JSON.stringify(current));
-    return { success: true, data: current };
   },
 
   deletePeriod: async (periodNumber: number, classroomId?: number) => {
-    const res = await apiRequest<WeeklyTimetableResponse>(`/timetable/periods/${periodNumber}${classroomId ? `?classroom_id=${classroomId}` : ""}`, {
+    return await apiRequest<WeeklyTimetableResponse>(`/timetable/periods/${periodNumber}${classroomId ? `?classroom_id=${classroomId}` : ""}`, {
       method: "DELETE",
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    // Fallback: update local schedule
-    const saved = localStorage.getItem("s360_timetable_schedule");
-    const current: WeeklyTimetableResponse = saved ? JSON.parse(saved) : DEFAULT_TIMETABLE_FALLBACK;
-    current.days.forEach(d => {
-      d.slots = d.slots.filter(s => s.period_number !== periodNumber);
-    });
-    localStorage.setItem("s360_timetable_schedule", JSON.stringify(current));
-    return { success: true, data: current };
   },
 
   resetTimetable: async (classroomId?: number) => {
-    const res = await apiRequest<WeeklyTimetableResponse>(`/timetable/reset${classroomId ? `?classroom_id=${classroomId}` : ""}`, {
+    return await apiRequest<WeeklyTimetableResponse>(`/timetable/reset${classroomId ? `?classroom_id=${classroomId}` : ""}`, {
       method: "POST",
     });
-
-    if (res.success && res.data) {
-      localStorage.removeItem("s360_timetable_schedule");
-      return res;
-    }
-
-    localStorage.removeItem("s360_timetable_schedule");
-    return { success: true, data: DEFAULT_TIMETABLE_FALLBACK };
   },
 };
 
@@ -523,49 +333,14 @@ export interface BulkPeriodAttendanceRequest {
 
 export const attendanceApi = {
   recordPeriodAttendance: async (payload: BulkPeriodAttendanceRequest) => {
-    const res = await apiRequest<any>("/attendance/period", {
+    return await apiRequest<any>("/attendance/period", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-
-    if (res.success) {
-      return res;
-    }
-
-    // Fallback save in localStorage for static deployment
-    const key = `s360_period_att_${payload.date}_${payload.period_number}`;
-    localStorage.setItem(key, JSON.stringify(payload));
-    return { success: true, data: payload };
   },
 
   getPeriodAttendance: async (date: string, periodNumber: number) => {
-    const res = await apiRequest<any>(`/attendance/period?date=${date}&period_number=${periodNumber}`);
-    if (res.success && res.data) {
-      return res;
-    }
-
-    const key = `s360_period_att_${date}_${periodNumber}`;
-    const local = localStorage.getItem(key);
-    if (local) {
-      try {
-        const parsed = JSON.parse(local);
-        return {
-          success: true,
-          data: {
-            date,
-            period_number: periodNumber,
-            records: parsed.attendance.map((a: any) => ({
-              student_id: a.student_id,
-              status: a.status,
-              notes: a.notes,
-            })),
-          },
-        };
-      } catch {
-        // Ignore
-      }
-    }
-    return { success: false, error: "Not found" };
+    return await apiRequest<any>(`/attendance/period?date=${date}&period_number=${periodNumber}`);
   },
 };
 
@@ -604,107 +379,32 @@ export const classroomApi = {
     advisor_faculty_id?: number;
     tutor_faculty_id?: number;
   }) => {
-    const res = await apiRequest<Classroom>("/classrooms", {
+    return await apiRequest<Classroom>("/classrooms", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    // Fallback for static frontend
-    const newClass: Classroom = {
-      id: Date.now(),
-      class_name: payload.class_name,
-      class_code: `CLS-${payload.year}${payload.section}-${Date.now().toString().slice(-4)}`,
-      academic_year: payload.academic_year,
-      year: payload.year,
-      semester: payload.semester,
-      section: payload.section,
-      student_count: 0,
-      is_active: true,
-    };
-    const saved = localStorage.getItem("s360_classrooms");
-    const list: Classroom[] = saved ? JSON.parse(saved) : [];
-    list.unshift(newClass);
-    localStorage.setItem("s360_classrooms", JSON.stringify(list));
-    localStorage.setItem("s360_my_classroom", JSON.stringify({ ...newClass, students: [] }));
-    return { success: true, data: newClass };
   },
 
   getMyClassroom: async () => {
-    const res = await apiRequest<ClassroomDetailResponse>("/classrooms/my");
-    if (res.success && res.data) {
-      return res;
-    }
-    const local = localStorage.getItem("s360_my_classroom");
-    if (local) {
-      try {
-        return { success: true, data: JSON.parse(local) };
-      } catch {
-        // Ignore
-      }
-    }
-    return { success: true, data: null };
+    return await apiRequest<ClassroomDetailResponse>("/classrooms/my");
   },
 
   getClassroomDetail: async (id: number) => {
-    const res = await apiRequest<ClassroomDetailResponse>(`/classrooms/${id}`);
-    if (res.success && res.data) {
-      return res;
-    }
-    const local = localStorage.getItem("s360_my_classroom");
-    if (local) {
-      return { success: true, data: JSON.parse(local) };
-    }
-    return { success: false, error: "Classroom not found" };
+    return await apiRequest<ClassroomDetailResponse>(`/classrooms/${id}`);
   },
 
   getDepartmentClassrooms: async (deptId: number) => {
-    const res = await apiRequest<Classroom[]>(`/classrooms/department/${deptId}`);
-    if (res.success && res.data) {
-      return res;
-    }
-    const saved = localStorage.getItem("s360_classrooms");
-    const list: Classroom[] = saved ? JSON.parse(saved) : [];
-    return { success: true, data: list };
+    return await apiRequest<Classroom[]>(`/classrooms/department/${deptId}`);
   },
 
   createStudentInClassroom: async (
     classroomId: number,
     payload: { name: string; register_number: string; password: string; confirm_password?: string }
   ) => {
-    const res = await apiRequest<any>(`/classrooms/${classroomId}/students`, {
+    return await apiRequest<any>(`/classrooms/${classroomId}/students`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    // Fallback in localStorage
-    const local = localStorage.getItem("s360_my_classroom");
-    if (local) {
-      const cls = JSON.parse(local);
-      const newStud = {
-        id: Date.now(),
-        register_number: payload.register_number,
-        full_name: payload.name,
-        profile_status: "INCOMPLETE",
-        is_locked: false,
-        year: cls.year || "II",
-        semester: cls.semester || 3,
-        section: cls.section || "A",
-        student_type: "DAY SCHOLAR",
-        attendance_percentage: 100,
-        cgpa: 8.5,
-        skills: ["Machine Learning", "Python"],
-      };
-      cls.students = cls.students || [];
-      cls.students.push(newStud);
-      cls.student_count = cls.students.length;
-      localStorage.setItem("s360_my_classroom", JSON.stringify(cls));
-      return { success: true, data: newStud };
-    }
-    return { success: true, data: { register_number: payload.register_number, full_name: payload.name } };
   },
 };
 
@@ -744,30 +444,10 @@ export const profileRequestApi = {
     requested_value: string;
     reason: string;
   }) => {
-    const res = await apiRequest<ProfileEditRequest>("/students/me/profile-edit-requests", {
+    return await apiRequest<ProfileEditRequest>("/students/me/profile-edit-requests", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    // Local fallback
-    const newReq: ProfileEditRequest = {
-      id: Date.now(),
-      student_id: 1,
-      section_name: payload.section_name,
-      field_name: payload.field_name,
-      current_value: payload.current_value,
-      requested_value: payload.requested_value,
-      reason: payload.reason,
-      status: "PENDING",
-      requested_at: new Date().toISOString(),
-    };
-    const saved = localStorage.getItem("s360_edit_requests");
-    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
-    list.unshift(newReq);
-    localStorage.setItem("s360_edit_requests", JSON.stringify(list));
-    return { success: true, data: newReq };
   },
 
   submitNameChangeRequest: async (payload: { requested_name: string; reason: string }) => {
@@ -787,95 +467,191 @@ export const profileRequestApi = {
   },
 
   getMyRequests: async () => {
-    const res = await apiRequest<ProfileEditRequest[]>("/students/me/profile-edit-requests");
-    if (res.success && res.data) {
-      return res;
-    }
-    const saved = localStorage.getItem("s360_edit_requests");
-    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
-    return { success: true, data: list };
+    return await apiRequest<ProfileEditRequest[]>("/students/me/profile-edit-requests");
   },
 
   getClassroomRequests: async (classroomId: number, status?: string) => {
-    const res = await apiRequest<ProfileEditRequest[]>(
+    return await apiRequest<ProfileEditRequest[]>(
       `/classrooms/${classroomId}/profile-edit-requests${status ? `?status=${status}` : ""}`
     );
-    if (res.success && res.data) {
-      return res;
-    }
-    const saved = localStorage.getItem("s360_edit_requests");
-    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
-    return { success: true, data: list };
   },
 
   approveRequest: async (requestId: number, review?: { advisor_comment?: string; permission_duration_hours?: number }) => {
-    const res = await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/approve`, {
+    return await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/approve`, {
       method: "POST",
       body: JSON.stringify(review || { action: "APPROVE", permission_duration_hours: 24 }),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    // Local fallback
-    const saved = localStorage.getItem("s360_edit_requests");
-    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
-    const item = list.find(r => r.id === requestId);
-    if (item) {
-      item.status = "APPROVED";
-      item.advisor_comment = review?.advisor_comment || "Approved by Advisor";
-      item.permission = {
-        id: Date.now(),
-        student_id: item.student_id,
-        field_name: item.field_name,
-        granted_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-        status: "ACTIVE",
-      };
-      localStorage.setItem("s360_edit_requests", JSON.stringify(list));
-      return { success: true, data: item };
-    }
-    return { success: false, error: "Request not found" };
   },
 
   rejectRequest: async (requestId: number, review?: { advisor_comment?: string }) => {
-    const res = await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/reject`, {
+    return await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/reject`, {
       method: "POST",
       body: JSON.stringify(review || { action: "REJECT" }),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    const saved = localStorage.getItem("s360_edit_requests");
-    const list: ProfileEditRequest[] = saved ? JSON.parse(saved) : [];
-    const item = list.find(r => r.id === requestId);
-    if (item) {
-      item.status = "REJECTED";
-      item.advisor_comment = review?.advisor_comment || "Rejected";
-      localStorage.setItem("s360_edit_requests", JSON.stringify(list));
-      return { success: true, data: item };
-    }
-    return { success: false, error: "Request not found" };
   },
 
   applyApprovedField: async (payload: { field_name: string; new_value: string }) => {
-    const res = await apiRequest<any>("/students/me/approved-field", {
+    return await apiRequest<any>("/students/me/approved-field", {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    return { success: true, data: payload };
+  },
+
+  applyApprovedProfile: async (payload: Record<string, any>) => {
+    return await apiRequest<any>("/students/me/approved-profile", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
   },
 
   completeProfile: async (payload: Record<string, any>) => {
-    const res = await apiRequest<any>("/students/me/complete-profile", {
+    return await apiRequest<any>("/students/me/complete-profile", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    if (res.success && res.data) {
-      return res;
-    }
-    return { success: true, data: { ...payload, profile_status: "LOCKED", is_locked: true } };
   },
-};
+};
+
+// Achievement CRUD API (for student self-service)
+export const achievementApi = {
+  getForStudent: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/achievements`);
+  },
+  create: async (payload: { student_id: number; title: string; description?: string; organization?: string; event_name?: string; achievement_date?: string; leadership_role?: string; position?: string }) => {
+    return apiRequest<any>("/achievements", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update: async (id: number, payload: Record<string, any>) => {
+    return apiRequest<any>(`/achievements/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  delete: async (id: number) => {
+    return apiRequest<any>(`/achievements/${id}`, { method: "DELETE" });
+  },
+};
+
+// Skill CRUD API
+export const skillApi = {
+  getForStudent: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/skills`);
+  },
+  create: async (payload: { student_id: number; name: string; category?: string; proficiency_level?: string }) => {
+    return apiRequest<any>("/skills", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update: async (id: number, payload: Record<string, any>) => {
+    return apiRequest<any>(`/skills/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  delete: async (id: number) => {
+    return apiRequest<any>(`/skills/${id}`, { method: "DELETE" });
+  },
+};
+
+// Certificate CRUD API
+export const certificateApi = {
+  getForStudent: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/certificates`);
+  },
+  create: async (payload: { student_id: number; title: string; issuing_organization?: string; issue_date?: string; credential_id?: string; credential_url?: string; thumbnail_url?: string }) => {
+    return apiRequest<any>("/certificates", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update: async (id: number, payload: Record<string, any>) => {
+    return apiRequest<any>(`/certificates/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  delete: async (id: number) => {
+    return apiRequest<any>(`/certificates/${id}`, { method: "DELETE" });
+  },
+};
+
+// Project CRUD API
+export const projectApi = {
+  getForStudent: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/projects`);
+  },
+  create: async (payload: { student_id: number; title: string; short_description?: string; detailed_description?: string; student_role?: string; start_date?: string; end_date?: string; github_url?: string; live_demo_url?: string; project_image_url?: string; technology_names?: string[] }) => {
+    return apiRequest<any>("/projects", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update: async (id: number, payload: Record<string, any>) => {
+    return apiRequest<any>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  delete: async (id: number) => {
+    return apiRequest<any>(`/projects/${id}`, { method: "DELETE" });
+  },
+};
+
+// Profile Links CRUD API
+export const profileLinkApi = {
+  getForStudent: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/profile-links`);
+  },
+  create: async (payload: { student_id: number; platform: string; url: string; is_public?: boolean }) => {
+    return apiRequest<any>("/profile-links", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update: async (id: number, payload: Record<string, any>) => {
+    return apiRequest<any>(`/profile-links/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  delete: async (id: number) => {
+    return apiRequest<any>(`/profile-links/${id}`, { method: "DELETE" });
+  },
+};
+
+// Remarks API (faculty writes, student reads)
+export const remarkApi = {
+  getForStudent: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/remarks`);
+  },
+  create: async (payload: { student_id: number; faculty_id?: number; grade: string; remark: string }) => {
+    return apiRequest<any>("/remarks", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update: async (id: number, payload: Record<string, any>) => {
+    return apiRequest<any>(`/remarks/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  delete: async (id: number) => {
+    return apiRequest<any>(`/remarks/${id}`, { method: "DELETE" });
+  },
+};
+
+// Student Attendance API (read-only for students)
+export const studentAttendanceApi = {
+  getForStudent: async (studentId: number | string, semester?: number) => {
+    const query = semester ? `?semester=${semester}` : '';
+    return apiRequest<any[]>(`/students/${studentId}/attendance${query}`);
+  },
+  getSummary: async (studentId: number | string, semester?: number) => {
+    const query = semester ? `?semester=${semester}` : '';
+    return apiRequest<any>(`/students/${studentId}/attendance/summary${query}`);
+  },
+};
+
+// Student Academics API
+export const academicApi = {
+  getBackground: async (studentId: number | string) => {
+    return apiRequest<any>(`/students/${studentId}/academics/background`);
+  },
+  setBackground: async (payload: Record<string, any>) => {
+    return apiRequest<any>("/academics/background", { method: "POST", body: JSON.stringify(payload) });
+  },
+  getSemesters: async (studentId: number | string) => {
+    return apiRequest<any[]>(`/students/${studentId}/academics/semesters`);
+  },
+  addSemester: async (payload: Record<string, any>) => {
+    return apiRequest<any>("/academics/semesters", { method: "POST", body: JSON.stringify(payload) });
+  },
+  getSubjectMarks: async (studentId: number | string, semester?: number) => {
+    const query = semester ? `?semester=${semester}` : '';
+    return apiRequest<any[]>(`/students/${studentId}/academics/subject-marks${query}`);
+  },
+  recordSubjectMarks: async (payload: Record<string, any>) => {
+    return apiRequest<any>("/academics/subject-marks", { method: "POST", body: JSON.stringify(payload) });
+  },
+};
+
+// Student update API (for profile updates)
+export const studentUpdateApi = {
+  updateStudent: async (studentId: number | string, payload: Record<string, any>) => {
+    return apiRequest<any>(`/students/${studentId}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  getStudentDetail: async (studentId: number | string) => {
+    return apiRequest<any>(`/students/${studentId}`);
+  },
+  searchStudents: async (query: string) => {
+    return apiRequest<any>(`/students/search?q=${encodeURIComponent(query)}`);
+  },
+};

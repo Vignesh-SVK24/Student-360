@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, 
@@ -28,16 +28,18 @@ const GithubIcon = () => (
     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
   </svg>
 );
-import { mockStudents } from "../../mock/data";
+import { mockStudents, type Student } from "../../mock/data";
 import { AmbientBackground } from "../../components/layout/AmbientBackground";
 import { FacultyProfileDropdown } from "../../components/faculty/FacultyProfileDropdown";
 import { TimetableModal } from "../../components/faculty/TimetableModal";
 import { ProfileRequestsModal } from "../../components/faculty/ProfileRequestsModal";
+import { studentUpdateApi, remarkApi } from "../../services/apiClient";
 
 export default function FacultyStudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
-  const student = mockStudents.find(s => s.id === studentId);
+
+  const [student, setStudent] = useState<Student | null>(() => mockStudents.find(s => s.id === studentId) || null);
   const [activeTab, setActiveTab] = useState("Overview");
   const [isTimetableOpen, setIsTimetableOpen] = useState(false);
   const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
@@ -61,18 +63,100 @@ export default function FacultyStudentProfile() {
     }
   ]);
 
+  useEffect(() => {
+    const loadDetail = async () => {
+      if (!studentId) return;
+      try {
+        const res = await studentUpdateApi.getStudentDetail(studentId);
+        if (res.success && res.data) {
+          const s = res.data;
+          setStudent({
+            id: String(s.id),
+            name: s.full_name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+            registerNumber: s.register_number,
+            department: s.department_name || "Artificial Intelligence & Data Science",
+            course: s.course_name || "B.Tech AI & Data Science",
+            year: s.year || "II",
+            section: s.section || "A",
+            cgpa: s.cgpa || 8.0,
+            attendance: s.attendance_percentage || 100,
+            image: s.profile_photo_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+            skills: (s.skills || []).map((sk: any) => sk.name || sk),
+            topAchievement: s.achievements?.[0]?.title || "Enrolled in Classroom",
+            email: s.email,
+            phone: s.phone_number,
+            residenceType: s.student_type || "Day Scholar",
+            achievementsList: (s.achievements || []).map((a: any) => ({
+              title: a.title,
+              event: a.event_name || a.title,
+              date: a.achievement_date ? String(a.achievement_date) : "2026",
+              rank: a.position || "Winner",
+            })),
+            projectsList: (s.projects || []).map((p: any) => ({
+              title: p.title,
+              tech: (p.technologies || []).map((t: any) => t.name || t),
+              githubUrl: p.github_url || "https://github.com",
+              desc: p.short_description || p.detailed_description || "Engineering project",
+            })),
+            certsList: (s.certificates || []).map((c: any) => ({
+              title: c.title,
+              org: c.issuing_organization || "Certification Authority",
+              date: c.issue_date ? String(c.issue_date) : "2026",
+              verifyUrl: c.credential_url || "https://verify.cert.org",
+            })),
+          });
+
+          if (s.remarks && s.remarks.length > 0) {
+            setRemarksList(s.remarks.map((r: any) => ({
+              id: String(r.id),
+              facultyName: r.faculty_name || "Faculty Member",
+              designation: "Class Advisor & Professor",
+              date: r.created_at ? new Date(r.created_at).toLocaleDateString() : "Recent",
+              grade: r.grade,
+              text: r.remark,
+            })));
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    };
+    loadDetail();
+  }, [studentId]);
+
   const [showAddRemark, setShowAddRemark] = useState(false);
   const [newGrade, setNewGrade] = useState("Excellent");
   const [newRemarkText, setNewRemarkText] = useState("");
 
-  const handleAddRemark = (e: React.FormEvent) => {
+  const handleAddRemark = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRemarkText.trim()) return;
 
+    if (student?.id) {
+      const res = await remarkApi.create({
+        student_id: Number(student.id),
+        grade: newGrade,
+        remark: newRemarkText.trim(),
+      });
+      if (res.success) {
+        setRemarksList(prev => [{
+          id: String(res.data?.id || Date.now()),
+          facultyName: "Dr. S. Ramanujam",
+          designation: "Class Advisor & Professor",
+          date: "Just now",
+          grade: newGrade,
+          text: newRemarkText.trim(),
+        }, ...prev]);
+        setNewRemarkText("");
+        setShowAddRemark(false);
+        return;
+      }
+    }
+
     const newEntry = {
       id: "rem-" + Date.now(),
-      facultyName: "Dr. Sarah Jenkins",
-      designation: "Associate Professor & AI Lab Director",
+      facultyName: "Dr. S. Ramanujam",
+      designation: "Class Advisor & Professor",
       date: "Just now",
       grade: newGrade,
       text: newRemarkText.trim()

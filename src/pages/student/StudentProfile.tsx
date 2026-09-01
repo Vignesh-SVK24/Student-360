@@ -16,7 +16,8 @@ import {
   Unlock,
   Clock,
   Send,
-  Sparkles
+  Sparkles,
+  Edit3
 } from "lucide-react";
 import StudentLayout from "../../components/student/StudentLayout";
 import { GlassDrawer } from '../../components/ui/GlassDrawer';
@@ -24,8 +25,7 @@ import { GlassModal } from '../../components/ui/GlassModal';
 import { GlassInput } from '../../components/ui/GlassInput';
 import { GlassButton } from '../../components/ui/GlassButton';
 import { useStudentAuth } from "../../context/StudentAuthContext";
-import { studentService } from "../../services/studentData";
-import { profileRequestApi, type ProfileEditRequest } from "../../services/apiClient";
+import { profileRequestApi, studentUpdateApi, type ProfileEditRequest } from "../../services/apiClient";
 import { RequestEditModal } from "../../components/student/RequestEditModal";
 import { CompleteProfileModal } from "../../components/student/CompleteProfileModal";
 
@@ -36,37 +36,38 @@ export default function StudentProfile() {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isCompleteProfileOpen, setIsCompleteProfileOpen] = useState(false);
-  const [preselectedField, setPreselectedField] = useState<{ section: string; field: string; currentValue: string } | undefined>();
   const [newPhotoUrl, setNewPhotoUrl] = useState(student.profileImage);
   const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Edit requests & permissions
   const [myRequests, setMyRequests] = useState<ProfileEditRequest[]>([]);
-  const [activePermField, setActivePermField] = useState<string>("");
-  const [activePermValue, setActivePermValue] = useState<string>("");
-  const [savingActivePerm, setSavingActivePerm] = useState(false);
 
   const fetchRequests = async () => {
     try {
       const res = await profileRequestApi.getMyRequests();
       if (res.success && res.data) {
-        setMyRequests(res.data);
-        const active = res.data.find(r => r.permission && r.permission.status === "ACTIVE" && new Date(r.permission.expires_at) > new Date());
-        if (active) {
-          setActivePermField(active.field_name);
-          setActivePermValue(active.requested_value || "");
-        } else {
-          setActivePermField("");
-        }
+        setRequestsData(res.data);
       }
     } catch {
       // Ignore
     }
   };
 
+  const setRequestsData = (data: ProfileEditRequest[]) => {
+    setMyRequests(data);
+  };
+
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  // Sync photo URL when student changes
+  useEffect(() => {
+    if (student.profileImage) {
+      setNewPhotoUrl(student.profileImage);
+    }
+  }, [student.profileImage]);
 
   // Edit form state
   const [formData, setFormData] = useState({
@@ -85,70 +86,91 @@ export default function StudentProfile() {
     portfolio: student.links.portfolio
   });
 
-  const handleOpenEdit = () => {
-    // If profile is locked, guide them to request edit
-    setPreselectedField({
-      section: "Personal Details",
-      field: "phone_number",
-      currentValue: student.personal.phone,
+  // Sync form data with student profile on load or refresh
+  useEffect(() => {
+    setFormData({
+      name: student.name,
+      registerNumber: student.registerNumber,
+      email: student.personal.email,
+      phone: student.personal.phone,
+      address: student.personal.address,
+      residenceType: student.personal.residenceType,
+      parentName: student.parent.name,
+      parentContact: student.parent.contact,
+      parentEmail: student.parent.email,
+      parentOccupation: student.parent.occupation,
+      github: student.links.github,
+      linkedin: student.links.linkedin,
+      portfolio: student.links.portfolio
     });
-    setIsRequestModalOpen(true);
+  }, [student]);
+
+  const activeRequest = myRequests.find(
+    r => r.status === "APPROVED" && r.permission && r.permission.status === "ACTIVE" && new Date(r.permission.expires_at) > new Date()
+  );
+  const pendingRequest = myRequests.find(r => r.status === "PENDING");
+  const isProfileUnlocked = Boolean(activeRequest);
+
+  const handleOpenEdit = () => {
+    if (isProfileUnlocked) {
+      setIsEditDrawerOpen(true);
+    } else {
+      setIsRequestModalOpen(true);
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name !== student.name || formData.registerNumber !== student.registerNumber) {
-      await studentService.updateAccountDetails({
-        name: formData.name,
-        registerNumber: formData.registerNumber
-      });
-    }
-    await studentService.updatePersonal({
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      residenceType: formData.residenceType as "Day Scholar" | "Hosteller"
-    });
-    await studentService.updateParent({
-      name: formData.parentName,
-      contact: formData.parentContact,
-      email: formData.parentEmail,
-      occupation: formData.parentOccupation
-    });
-    await studentService.updateLinks({
-      github: formData.github,
-      linkedin: formData.linkedin,
-      portfolio: formData.portfolio
-    });
-    refreshStudent();
-    setIsEditDrawerOpen(false);
-    showToastNotification("Profile updated successfully!");
-  };
-
-  const handleApplyActivePermission = async () => {
-    if (!activePermField || !activePermValue.trim()) return;
-    setSavingActivePerm(true);
+    setSavingProfile(true);
     try {
-      const res = await profileRequestApi.applyApprovedField({
-        field_name: activePermField,
-        new_value: activePermValue.trim(),
+      // Save entire profile through the approved profile endpoint
+      const res = await profileRequestApi.applyApprovedProfile({
+        name: formData.name,
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        phone_number: formData.phone,
+        address: formData.address,
+        residenceType: formData.residenceType,
+        student_type: formData.residenceType,
+        parentName: formData.parentName,
+        parent_name: formData.parentName,
+        parentContact: formData.parentContact,
+        parent_phone: formData.parentContact,
+        parentEmail: formData.parentEmail,
+        parent_email: formData.parentEmail,
+        parentOccupation: formData.parentOccupation,
+        parent_occupation: formData.parentOccupation,
+        github: formData.github,
+        linkedin: formData.linkedin,
+        portfolio: formData.portfolio,
       });
+
       if (res.success) {
-        showToastNotification(`Field "${activePermField}" updated and profile re-locked.`);
+        await refreshStudent();
         await fetchRequests();
-        refreshStudent();
+        setIsEditDrawerOpen(false);
+        showToastNotification("Profile updated and re-locked successfully in database!");
+      } else {
+        showToastNotification(res.error || "Failed to save profile changes.");
       }
+    } catch {
+      showToastNotification("Unable to reach backend server to save profile.");
     } finally {
-      setSavingActivePerm(false);
+      setSavingProfile(false);
     }
   };
 
   const handleSavePhoto = async () => {
     if (newPhotoUrl.trim()) {
-      await studentService.updateProfilePhoto(newPhotoUrl.trim());
-      refreshStudent();
-      setIsPhotoModalOpen(false);
-      showToastNotification("Profile photo updated!");
+      const res = await studentUpdateApi.updateStudent(student.id, { profile_photo_url: newPhotoUrl.trim() });
+      if (res.success) {
+        await refreshStudent();
+        setIsPhotoModalOpen(false);
+        showToastNotification("Profile photo updated in database!");
+      } else {
+        showToastNotification(res.error || "Failed to update profile photo.");
+      }
     }
   };
 
@@ -157,9 +179,6 @@ export default function StudentProfile() {
     setTimeout(() => setSaveToast(null), 4000);
   };
 
-  const activeRequest = myRequests.find(r => r.status === "APPROVED" && r.permission?.status === "ACTIVE");
-  const pendingRequest = myRequests.find(r => r.status === "PENDING");
-
   return (
     <StudentLayout
       pageTitle="My Profile"
@@ -167,44 +186,39 @@ export default function StudentProfile() {
       showBack={true}
       actions={
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-sm">
-            <Lock className="w-3.5 h-3.5 text-amber-400" />
-            <span>🔒 Profile Locked</span>
-          </span>
+          {isProfileUnlocked ? (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-xs font-bold shadow-sm animate-pulse">
+              <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+              <span>🔓 24h Window Active</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-sm">
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span>🔒 Profile Locked</span>
+            </span>
+          )}
 
-          <GlassButton
-            onClick={() => {
-              setPreselectedField({
-                section: "Name",
-                field: "full_name",
-                currentValue: student.name,
-              });
-              setIsRequestModalOpen(true);
-            }}
-            className="gap-1.5 bg-white text-slate-800 border border-slate-200 text-xs py-2 px-3.5 cursor-pointer shadow-sm hover:bg-slate-50"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-purple-600" />
-            <span>Change Name</span>
-          </GlassButton>
-
-          <GlassButton
-            onClick={() => {
-              setPreselectedField({
-                section: "Personal Details",
-                field: "phone_number",
-                currentValue: student.personal.phone,
-              });
-              setIsRequestModalOpen(true);
-            }}
-            className="gap-1.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs py-2 px-3.5 cursor-pointer shadow-md shadow-amber-500/20"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Request Edit</span>
-          </GlassButton>
+          {isProfileUnlocked ? (
+            <GlassButton
+              onClick={() => setIsEditDrawerOpen(true)}
+              className="gap-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs py-2 px-3.5 cursor-pointer shadow-md shadow-emerald-500/20 font-bold"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit "My Profile"</span>
+            </GlassButton>
+          ) : (
+            <GlassButton
+              onClick={() => setIsRequestModalOpen(true)}
+              className="gap-1.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs py-2 px-3.5 cursor-pointer shadow-md shadow-amber-500/20 font-bold"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Request Profile Modification</span>
+            </GlassButton>
+          )}
 
           <GlassButton
             onClick={() => setIsCompleteProfileOpen(true)}
-            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-3.5 cursor-pointer shadow-sm"
+            className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs py-2 px-3.5 cursor-pointer shadow-sm"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Complete Setup</span>
@@ -222,47 +236,38 @@ export default function StudentProfile() {
 
       <div className="space-y-6">
         {/* Active Permission Edit Window Alert */}
-        {activeRequest && activeRequest.permission && (
+        {isProfileUnlocked && activeRequest && activeRequest.permission && (
           <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/90 to-slate-900 border-2 border-emerald-500/50 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                 <h4 className="text-sm font-extrabold text-emerald-300 flex items-center gap-1.5 uppercase tracking-wider">
-                  <Unlock className="w-4 h-4" /> 24-Hour Edit Window Active
+                  <Unlock className="w-4 h-4" /> 24-Hour Full Profile Edit Window Active
                 </h4>
               </div>
               <p className="text-xs text-slate-300">
-                Your Class Advisor approved editing <strong>"{activeRequest.field_name}"</strong>. Expires at {new Date(activeRequest.permission.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+                Your Class Advisor approved full edit access for <strong>"MY PROFILE"</strong>. All fields are unlocked. Window expires at {new Date(activeRequest.permission.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <input
-                type="text"
-                value={activePermValue}
-                onChange={(e) => setActivePermValue(e.target.value)}
-                placeholder="Enter new value..."
-                className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:border-emerald-400 flex-1 md:w-64"
-              />
-              <button
-                type="button"
-                disabled={savingActivePerm || !activePermValue.trim()}
-                onClick={handleApplyActivePermission}
-                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30 cursor-pointer disabled:opacity-50 transition-all shrink-0"
-              >
-                {savingActivePerm ? "Applying..." : "Save & Re-Lock"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsEditDrawerOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30 cursor-pointer transition-all shrink-0 flex items-center gap-2"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Open Profile Editor</span>
+            </button>
           </div>
         )}
 
         {/* Pending Request Indicator */}
-        {pendingRequest && (
+        {!isProfileUnlocked && pendingRequest && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <Clock className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                Edit request for <strong>"{pendingRequest.field_name}"</strong> is currently pending review by your Class Advisor.
+                Your request to modify <strong>"MY PROFILE"</strong> is currently pending Class Advisor review.
               </span>
             </div>
             <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold text-[11px] uppercase tracking-wider shrink-0">
@@ -272,12 +277,14 @@ export default function StudentProfile() {
         )}
 
         {/* Institutional Lock Information Banner */}
-        <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 text-slate-600 text-xs flex items-start gap-3">
-          <Lock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-          <p className="leading-relaxed">
-            <strong className="text-slate-900">Institutional Profile Security:</strong> All identity, academic, parent, and contact details are verified and locked. To change any information, click <strong>"Request Edit"</strong> or <strong>"Change Name"</strong> to receive an advisor-authorized edit window.
-          </p>
-        </div>
+        {!isProfileUnlocked && !pendingRequest && (
+          <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 text-slate-600 text-xs flex items-start gap-3">
+            <Lock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              <strong className="text-slate-900">Institutional Profile Security:</strong> All personal, parent, and contact details are verified and locked. To change any information, click <strong>"Request Profile Modification"</strong>. Your advisor will approve a 24-hour edit window for your entire "MY PROFILE" page.
+            </p>
+          </div>
+        )}
 
         {/* Profile Card Hero */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/60 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
@@ -298,14 +305,24 @@ export default function StudentProfile() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
                   <span>{student.name}</span>
-                  <Lock className="w-4 h-4 text-slate-400" />
+                  {isProfileUnlocked ? (
+                    <Unlock className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-slate-400" />
+                  )}
                 </h2>
                 <span className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 text-xs font-extrabold border border-purple-100">
                   {student.registerNumber}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                  🔒 Profile Locked
-                </span>
+                {isProfileUnlocked ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
+                    🔓 Unlocked (24h)
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                    🔒 Profile Locked
+                  </span>
+                )}
               </div>
 
               <p className="text-slate-600 font-semibold text-sm mb-3">
@@ -323,20 +340,23 @@ export default function StudentProfile() {
           </div>
 
           <div className="z-10 flex gap-2 w-full md:w-auto justify-center flex-wrap">
-            <GlassButton
-              onClick={() => {
-                setPreselectedField({
-                  section: "Personal Details",
-                  field: "phone_number",
-                  currentValue: student.personal.phone,
-                });
-                setIsRequestModalOpen(true);
-              }}
-              className="gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Request Edit</span>
-            </GlassButton>
+            {isProfileUnlocked ? (
+              <GlassButton
+                onClick={() => setIsEditDrawerOpen(true)}
+                className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Profile</span>
+              </GlassButton>
+            ) : (
+              <GlassButton
+                onClick={() => setIsRequestModalOpen(true)}
+                className="gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Request Edit Access</span>
+              </GlassButton>
+            )}
           </div>
         </div>
 
@@ -348,7 +368,7 @@ export default function StudentProfile() {
                 <UserCheck className="w-5 h-5 text-purple-600" /> Personal Information
               </h3>
               <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                Student Managed
+                {isProfileUnlocked ? "Editable Now" : "Locked"}
               </span>
             </div>
 
@@ -399,7 +419,7 @@ export default function StudentProfile() {
                 <Building className="w-5 h-5 text-[#0d4933]" /> Parent / Guardian Details
               </h3>
               <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                Family Record
+                {isProfileUnlocked ? "Editable Now" : "Family Record"}
               </span>
             </div>
 
@@ -486,14 +506,16 @@ export default function StudentProfile() {
               </h3>
               <p className="text-xs text-slate-500 font-medium">Online presence, repositories and professional profiles</p>
             </div>
-            <GlassButton onClick={handleOpenEdit} variant="secondary" className="text-xs py-1.5">
-              Edit Links
-            </GlassButton>
+            {isProfileUnlocked && (
+              <GlassButton onClick={handleOpenEdit} variant="secondary" className="text-xs py-1.5">
+                Edit Links
+              </GlassButton>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <a
-              href={student.links.github}
+              href={student.links.github || "#"}
               target="_blank"
               rel="noreferrer"
               className="p-5 rounded-2xl border border-slate-200/80 hover:border-slate-400 hover:shadow-md transition-all group flex flex-col justify-between"
@@ -507,13 +529,13 @@ export default function StudentProfile() {
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">GitHub</p>
                 <p className="text-sm font-bold text-slate-900 group-hover:text-purple-600 transition-colors truncate">
-                  {student.links.github.replace("https://", "")}
+                  {student.links.github ? student.links.github.replace("https://", "") : "Not set"}
                 </p>
               </div>
             </a>
 
             <a
-              href={student.links.linkedin}
+              href={student.links.linkedin || "#"}
               target="_blank"
               rel="noreferrer"
               className="p-5 rounded-2xl border border-slate-200/80 hover:border-[#629176]/40 hover:shadow-md transition-all group flex flex-col justify-between"
@@ -527,13 +549,13 @@ export default function StudentProfile() {
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">LinkedIn</p>
                 <p className="text-sm font-bold text-slate-900 group-hover:text-[#0d4933] transition-colors truncate">
-                  {student.links.linkedin.replace("https://", "")}
+                  {student.links.linkedin ? student.links.linkedin.replace("https://", "") : "Not set"}
                 </p>
               </div>
             </a>
 
             <a
-              href={student.links.portfolio}
+              href={student.links.portfolio || "#"}
               target="_blank"
               rel="noreferrer"
               className="p-5 rounded-2xl border border-slate-200/80 hover:border-emerald-300 hover:shadow-md transition-all group flex flex-col justify-between"
@@ -547,7 +569,7 @@ export default function StudentProfile() {
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Personal Portfolio</p>
                 <p className="text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition-colors truncate">
-                  {student.links.portfolio.replace("https://", "")}
+                  {student.links.portfolio ? student.links.portfolio.replace("https://", "") : "Not set"}
                 </p>
               </div>
             </a>
@@ -559,13 +581,13 @@ export default function StudentProfile() {
       <GlassDrawer
         isOpen={isEditDrawerOpen}
         onClose={() => setIsEditDrawerOpen(false)}
-        title="Edit Profile Information"
+        title="Edit 'My Profile' (Full Dossier)"
       >
         <form onSubmit={handleSaveProfile} className="space-y-6">
-          {/* Student Identity & Academic Credentials */}
+          {/* Student Identity */}
           <div className="space-y-4 p-4 rounded-2xl bg-[#629176]/10 border border-[#629176]/30">
             <h4 className="text-xs font-bold text-[#0d4933] uppercase tracking-wider flex items-center gap-1.5">
-              <span>Student Identity & Credentials</span>
+              <span>Student Identity</span>
             </h4>
             <GlassInput
               label="Full Student Name"
@@ -575,11 +597,10 @@ export default function StudentProfile() {
               placeholder="e.g. Arun Kumar"
             />
             <GlassInput
-              label="Register Number"
-              required
+              label="Register Number (Institutional)"
+              disabled
               value={formData.registerNumber}
-              onChange={(e: any) => setFormData({ ...formData, registerNumber: e.target.value.toUpperCase() })}
-              placeholder="e.g. 23AIM001"
+              onChange={() => {}}
             />
           </div>
 
@@ -677,9 +698,10 @@ export default function StudentProfile() {
             </GlassButton>
             <GlassButton
               type="submit"
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white cursor-pointer"
+              disabled={savingProfile}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white cursor-pointer font-bold disabled:opacity-50"
             >
-              Save Changes
+              {savingProfile ? "Saving to Database..." : "Save Profile & Re-Lock"}
             </GlassButton>
           </div>
         </form>
@@ -749,25 +771,23 @@ export default function StudentProfile() {
         </div>
       </GlassModal>
 
-      {/* Request Field Edit & Name Change Modal */}
+      {/* Profile Modification Request Modal */}
       <RequestEditModal
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        preselectedField={preselectedField}
-        onSuccess={(req) => {
-          showToastNotification(`Edit request for "${req.field_name}" submitted to Class Advisor.`);
-          fetchRequests();
+        onSuccess={(newReq) => {
+          setMyRequests(prev => [newReq, ...prev]);
+          showToastNotification("Profile modification request submitted to Class Advisor!");
         }}
       />
 
-      {/* Complete Profile Setup Modal */}
+      {/* First Time Complete Profile Wizard */}
       <CompleteProfileModal
         isOpen={isCompleteProfileOpen}
         onClose={() => setIsCompleteProfileOpen(false)}
         onSuccess={() => {
-          showToastNotification("Profile completed and securely locked!");
           refreshStudent();
-          fetchRequests();
+          showToastNotification("Profile setup completed successfully!");
         }}
       />
     </StudentLayout>

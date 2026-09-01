@@ -9,8 +9,8 @@ export default function StudentLogin() {
   const navigate = useNavigate();
   const { login } = useStudentAuth();
 
-  const [identifier, setIdentifier] = useState("23AIM001");
-  const [password, setPassword] = useState("Student@360");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -182,11 +182,6 @@ export default function StudentLogin() {
                   />
                   <span>Remember my session</span>
                 </label>
-              </div>
-
-              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300 flex items-center justify-between">
-                <span>Demo Student ID: <strong className="font-mono text-purple-200">23AIM001</strong></span>
-                <span className="font-semibold text-purple-200">Pre-filled</span>
               </div>
 
               <button

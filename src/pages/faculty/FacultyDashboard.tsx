@@ -31,7 +31,7 @@ import { GrantAccessModal } from "../../components/faculty/GrantAccessModal";
 import { CreateClassroomModal } from "../../components/faculty/CreateClassroomModal";
 import { ProfileRequestsModal } from "../../components/faculty/ProfileRequestsModal";
 import { useFacultyAuth } from "../../context/FacultyAuthContext";
-import { classroomApi, profileRequestApi, type Classroom } from "../../services/apiClient";
+import { classroomApi, profileRequestApi, studentUpdateApi, type Classroom } from "../../services/apiClient";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
@@ -51,74 +51,88 @@ export default function FacultyDashboard() {
   const [myClassroom, setMyClassroom] = useState<Classroom | null>(null);
   const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(0);
 
-  const [studentsList, setStudentsList] = useState<Student[]>(() => {
-    const custom = localStorage.getItem("s360_custom_students");
-    if (custom) {
-      try {
-        const parsed = JSON.parse(custom);
-        return [...mockStudents, ...parsed];
-      } catch {
-        return mockStudents;
-      }
-    }
-    return mockStudents;
-  });
+  const [studentsList, setStudentsList] = useState<Student[]>(() => mockStudents);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const loadClassroomAndRequests = async () => {
-      try {
-        const res = await classroomApi.getMyClassroom();
-        if (res.success && res.data) {
-          setMyClassroom(res.data);
-          // If classroom has students returned, integrate them
-          if (res.data.students && res.data.students.length > 0) {
-            const mapped = res.data.students.map((s: any) => ({
-              id: String(s.id),
-              name: s.full_name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
-              registerNumber: s.register_number,
-              department: "Artificial Intelligence & Data Science",
-              course: "B.Tech AI & Data Science",
-              year: s.year || "II",
-              section: s.section || "A",
-              cgpa: s.cgpa || 8.0,
-              attendance: s.attendance_percentage || 100,
-              image: s.profile_photo_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-              skills: s.skills || ["Python", "Machine Learning"],
-              topAchievement: "Enrolled in Classroom",
-              email: s.email,
-              phone: s.phone_number,
-              residenceType: s.student_type || "Day Scholar",
-            }));
-            setStudentsList(prev => {
-              const existingRegs = new Set(prev.map(x => x.registerNumber));
-              const newOnly = mapped.filter((x: any) => !existingRegs.has(x.registerNumber));
-              return [...newOnly, ...prev];
-            });
-          }
-
-          // Fetch pending requests for this classroom
-          const reqRes = await profileRequestApi.getClassroomRequests(res.data.id, "PENDING");
-          if (reqRes.success && reqRes.data) {
-            setPendingRequestsCount(reqRes.data.length);
-          }
-        } else {
-          // Check general requests
-          const reqRes = await profileRequestApi.getMyRequests();
-          if (reqRes.success && reqRes.data) {
-            setPendingRequestsCount(reqRes.data.filter(r => r.status === "PENDING").length);
-          }
+  const loadClassroomAndRequests = async () => {
+    try {
+      const res = await classroomApi.getMyClassroom();
+      if (res.success && res.data) {
+        setMyClassroom(res.data);
+        if (res.data.students && res.data.students.length > 0) {
+          const mapped = res.data.students.map((s: any) => ({
+            id: String(s.id),
+            name: s.full_name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+            registerNumber: s.register_number,
+            department: "Artificial Intelligence & Data Science",
+            course: "B.Tech AI & Data Science",
+            year: s.year || "II",
+            section: s.section || "A",
+            cgpa: s.cgpa || 8.0,
+            attendance: s.attendance_percentage || 100,
+            image: s.profile_photo_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+            skills: s.skills || ["Python", "Machine Learning"],
+            topAchievement: "Enrolled in Classroom",
+            email: s.email,
+            phone: s.phone_number,
+            residenceType: s.student_type || "Day Scholar",
+          }));
+          setStudentsList(prev => {
+            const existingRegs = new Set(prev.map(x => x.registerNumber));
+            const newOnly = mapped.filter((x: any) => !existingRegs.has(x.registerNumber));
+            return [...newOnly, ...prev];
+          });
         }
-      } catch {
-        // Ignore fallback
+
+        const reqRes = await profileRequestApi.getClassroomRequests(res.data.id, "PENDING");
+        if (reqRes.success && reqRes.data) {
+          setPendingRequestsCount(reqRes.data.length);
+        }
+      } else {
+        const reqRes = await profileRequestApi.getMyRequests();
+        if (reqRes.success && reqRes.data) {
+          setPendingRequestsCount(reqRes.data.filter(r => r.status === "PENDING").length);
+        }
       }
-    };
+
+      // Also search database for all enrolled students
+      const dbSearchRes = await studentUpdateApi.searchStudents("");
+      if (dbSearchRes.success && dbSearchRes.data?.items) {
+        const dbMapped = dbSearchRes.data.items.map((s: any) => ({
+          id: String(s.id),
+          name: s.full_name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+          registerNumber: s.register_number,
+          department: s.department_name || "Artificial Intelligence & Data Science",
+          course: s.course_name || "B.Tech AI & Data Science",
+          year: s.year || "II",
+          section: s.section || "A",
+          cgpa: s.cgpa || 8.0,
+          attendance: s.attendance_percentage || 100,
+          image: s.profile_photo_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+          skills: ["Python", "Machine Learning"],
+          topAchievement: "Enrolled in Institutional Database",
+          email: s.email,
+          phone: s.phone_number,
+          residenceType: s.student_type || "Day Scholar",
+        }));
+        setStudentsList(prev => {
+          const existingRegs = new Set(prev.map(x => x.registerNumber));
+          const newOnly = dbMapped.filter((x: any) => !existingRegs.has(x.registerNumber));
+          return [...newOnly, ...prev];
+        });
+      }
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
     loadClassroomAndRequests();
   }, []);
 
   const handleStudentAdded = (apiStudent: any) => {
     const formatted: Student = {
-      id: apiStudent.id ? String(apiStudent.id) : `custom-${Date.now()}`,
+      id: apiStudent.id ? String(apiStudent.id) : `db-${Date.now()}`,
       name: apiStudent.full_name || `${apiStudent.first_name} ${apiStudent.last_name}`,
       registerNumber: apiStudent.register_number,
       department: "Artificial Intelligence & Data Science",
@@ -135,9 +149,7 @@ export default function FacultyDashboard() {
       residenceType: (apiStudent.student_type as any) || "Day Scholar",
     };
     setStudentsList((prev) => [formatted, ...prev]);
-    const custom = JSON.parse(localStorage.getItem("s360_custom_students") || "[]");
-    custom.unshift(formatted);
-    localStorage.setItem("s360_custom_students", JSON.stringify(custom));
+    loadClassroomAndRequests();
   };
 
   useEffect(() => {

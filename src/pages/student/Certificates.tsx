@@ -17,7 +17,7 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { Toast } from "../../components/ui/Toast";
 import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
-import { certificateService } from "../../services/studentData";
+import { certificateApi } from "../../services/apiClient";
 import type { CertificateItem } from "../../types/student";
 
 export default function Certificates() {
@@ -53,25 +53,36 @@ export default function Certificates() {
     e.preventDefault();
     if (!formData.title.trim()) return;
 
-    await certificateService.add({
+    const res = await certificateApi.create({
+      student_id: Number(student.id),
       title: formData.title,
-      organization: formData.organization,
-      issueDate: formData.issueDate,
-      certificateId: formData.certificateId,
-      credentialUrl: formData.credentialUrl,
-      thumbnail: formData.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=80"
+      issuing_organization: formData.organization,
+      issue_date: formData.issueDate || undefined,
+      credential_id: formData.certificateId,
+      credential_url: formData.credentialUrl,
+      thumbnail_url: formData.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=80",
     });
-    refreshStudent();
+
+    if (res.success) {
+      showToast("Certificate added successfully!");
+    } else {
+      showToast(res.error || "Failed to add certificate");
+    }
+
+    await refreshStudent();
     setIsDrawerOpen(false);
-    showToast("Certificate added successfully!");
   };
 
   const confirmDelete = async () => {
     if (deleteModalId) {
-      await certificateService.delete(deleteModalId);
-      refreshStudent();
+      const res = await certificateApi.delete(Number(deleteModalId));
+      if (res.success) {
+        showToast("Certificate removed.");
+      } else {
+        showToast(res.error || "Failed to delete");
+      }
+      await refreshStudent();
       setDeleteModalId(null);
-      showToast("Certificate removed.");
     }
   };
 

@@ -16,7 +16,6 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { Toast } from "../../components/ui/Toast";
 import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
-import { studentService } from "../../services/studentData";
 import { authApi, studentApi } from "../../services/apiClient";
 
 export default function StudentSettings() {
@@ -39,20 +38,25 @@ export default function StudentSettings() {
 
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editName.trim() || !editRegNo.trim()) {
-      showToast("Name and Register Number cannot be empty!");
+    if (!editName.trim()) {
+      showToast("Name cannot be empty!");
       return;
     }
-    // Call backend API if online
-    await studentApi.updateMyName({ display_name: editName.trim() }).catch(() => {});
-
-    await studentService.updateAccountDetails({
-      name: editName.trim(),
-      registerNumber: editRegNo.trim().toUpperCase()
+    const nameParts = editName.trim().split(" ");
+    const res = await studentApi.updateMyName({
+      display_name: editName.trim(),
+      first_name: nameParts[0],
+      last_name: nameParts.slice(1).join(" ") || nameParts[0],
     });
-    refreshStudent();
+
+    if (res.success) {
+      showToast("Student name updated successfully in database!");
+    } else {
+      showToast(res.error || "Failed to update name");
+    }
+
+    await refreshStudent();
     setIsEditingAccount(false);
-    showToast("Student Name and Register Number updated successfully!");
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {

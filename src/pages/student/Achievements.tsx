@@ -15,7 +15,7 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { Toast } from "../../components/ui/Toast";
 import { useToast } from "../../lib/useToast";
 import { useStudentAuth } from "../../context/StudentAuthContext";
-import { achievementService } from "../../services/studentData";
+import { achievementApi } from "../../services/apiClient";
 import type { AchievementItem } from "../../types/student";
 
 export default function Achievements() {
@@ -69,22 +69,51 @@ export default function Achievements() {
     if (!formData.title.trim()) return;
 
     if (editingId) {
-      await achievementService.update(editingId, formData);
-      showToast("Achievement updated successfully!");
+      const res = await achievementApi.update(Number(editingId), {
+        title: formData.title,
+        organization: formData.organization,
+        event_name: formData.event,
+        achievement_date: formData.date || undefined,
+        description: formData.description,
+        leadership_role: formData.leadershipRole,
+        position: formData.position,
+      });
+      if (res.success) {
+        showToast("Achievement updated successfully!");
+      } else {
+        showToast(res.error || "Failed to update achievement");
+      }
     } else {
-      await achievementService.add(formData);
-      showToast("Achievement added successfully!");
+      const res = await achievementApi.create({
+        student_id: Number(student.id),
+        title: formData.title,
+        organization: formData.organization,
+        event_name: formData.event,
+        achievement_date: formData.date || undefined,
+        description: formData.description,
+        leadership_role: formData.leadershipRole,
+        position: formData.position,
+      });
+      if (res.success) {
+        showToast("Achievement added successfully!");
+      } else {
+        showToast(res.error || "Failed to add achievement");
+      }
     }
-    refreshStudent();
+    await refreshStudent();
     setIsDrawerOpen(false);
   };
 
   const confirmDelete = async () => {
     if (deleteModalId) {
-      await achievementService.delete(deleteModalId);
-      refreshStudent();
+      const res = await achievementApi.delete(Number(deleteModalId));
+      if (res.success) {
+        showToast("Achievement deleted.");
+      } else {
+        showToast(res.error || "Failed to delete");
+      }
+      await refreshStudent();
       setDeleteModalId(null);
-      showToast("Achievement deleted.");
     }
   };
 

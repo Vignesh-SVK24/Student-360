@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -12,12 +12,38 @@ import {
 } from "lucide-react";
 import StudentLayout from "../../components/student/StudentLayout";
 import { useStudentAuth } from "../../context/StudentAuthContext";
+import { studentAttendanceApi } from "../../services/apiClient";
+import type { SubjectAttendance } from "../../types/student";
 
 export default function StudentAttendance() {
   const { student } = useStudentAuth();
   const [selectedSemester, setSelectedSemester] = useState<number>(3);
   const [isODModalOpen, setIsODModalOpen] = useState(false);
   const [odToast, setOdToast] = useState<string | null>(null);
+  const [dbSubjects, setDbSubjects] = useState<SubjectAttendance[]>([]);
+
+  useEffect(() => {
+    const loadAtt = async () => {
+      try {
+        const res = await studentAttendanceApi.getForStudent(student.id, selectedSemester);
+        if (res.success && res.data && res.data.length > 0) {
+          const mapped: SubjectAttendance[] = res.data.map((r: any) => ({
+            code: r.subject_code || "SUB",
+            subject: r.subject_name || "Course Subject",
+            total: r.total_classes,
+            present: r.present_classes,
+            absent: r.absent_classes,
+            od: 0,
+            percentage: r.attendance_percentage,
+          }));
+          setDbSubjects(mapped);
+        }
+      } catch {
+        // Fallback
+      }
+    };
+    loadAtt();
+  }, [student.id, selectedSemester]);
 
   // OD Request State
   const [odForm, setOdForm] = useState({
@@ -30,12 +56,12 @@ export default function StudentAttendance() {
     proofUrl: ""
   });
 
-  const subjects = student.attendanceBySemester[selectedSemester] || [
-    { code: "23AI401", subject: "Artificial Intelligence Principles", total: 45, present: 38, absent: 4, od: 3, percentage: 91.1 },
-    { code: "23AI402", subject: "Deep Learning Architectures", total: 50, present: 43, absent: 4, od: 3, percentage: 92.0 },
-    { code: "23AI403", subject: "Computer Vision Systems", total: 40, present: 33, absent: 5, od: 2, percentage: 87.5 },
-    { code: "23AI404", subject: "Cloud Computing & DevOps", total: 38, present: 31, absent: 5, od: 2, percentage: 86.8 }
-  ];
+  const subjects = dbSubjects.length > 0 ? dbSubjects : (student.attendanceBySemester[selectedSemester] || [
+    { code: "AI8401", subject: "Deep Learning Architectures", total: 45, present: 38, absent: 4, od: 3, percentage: 91.1 },
+    { code: "AI8402", subject: "Natural Language Processing", total: 50, present: 43, absent: 4, od: 3, percentage: 92.0 },
+    { code: "AI8403", subject: "Computer Vision Systems", total: 40, present: 33, absent: 5, od: 2, percentage: 87.5 },
+    { code: "CS8403", subject: "Cloud & Distributed Systems", total: 38, present: 31, absent: 5, od: 2, percentage: 86.8 }
+  ]);
 
   const totalClasses = subjects.reduce((sum, s) => sum + s.total, 0);
   const totalPresent = subjects.reduce((sum, s) => sum + s.present, 0);
