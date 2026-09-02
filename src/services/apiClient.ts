@@ -1,6 +1,35 @@
 // Student 360 - Central API Client & Auth Gateway
+import { offlineDb } from "./offlineDb";
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL || "http://localhost:8000/api/v1";
+const getApiBase = () => {
+  if ((import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    // If running in local Vite dev server
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://127.0.0.1:8000/api/v1";
+    }
+  }
+  return "http://127.0.0.1:8000/api/v1";
+};
+
+const API_BASE = getApiBase();
+
+export function isNetworkError(res: { success: boolean; error?: string }): boolean {
+  if (!res.success && res.error) {
+    const err = res.error.toLowerCase();
+    return (
+      err.includes("failed to fetch") ||
+      err.includes("network error") ||
+      err.includes("networkerror") ||
+      err.includes("load failed") ||
+      err.includes("unable to reach") ||
+      err.includes("cross-origin")
+    );
+  }
+  return false;
+}
 
 export interface UserSession {
   id: number;
@@ -87,7 +116,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
     return { success: true, data: json?.data ?? json };
   } catch (err: any) {
-    return { success: false, error: err.message || "Network error. Unable to reach backend server." };
+    return { success: false, error: err.message || "Failed to fetch" };
   }
 }
 
@@ -101,7 +130,17 @@ export const authApi = {
 
     if (res.success && res.data) {
       tokenStorage.setTokens(res.data, rememberMe);
+      return res;
     }
+
+    if (isNetworkError(res)) {
+      const offlineRes = await offlineDb.loginStudent(identifier, pass);
+      if (offlineRes.success && offlineRes.data) {
+        tokenStorage.setTokens(offlineRes.data, rememberMe);
+      }
+      return offlineRes;
+    }
+
     return res;
   },
 
@@ -113,7 +152,17 @@ export const authApi = {
 
     if (res.success && res.data) {
       tokenStorage.setTokens(res.data, rememberMe);
+      return res;
     }
+
+    if (isNetworkError(res)) {
+      const offlineRes = await offlineDb.loginFaculty(identifier, pass);
+      if (offlineRes.success && offlineRes.data) {
+        tokenStorage.setTokens(offlineRes.data, rememberMe);
+      }
+      return offlineRes;
+    }
+
     return res;
   },
 
@@ -124,6 +173,7 @@ export const authApi = {
     phone_number?: string;
     department_id?: number;
     designation: string;
+    assigned_role?: string;
     password: string;
     confirm_password: string;
   }) => {
@@ -134,12 +184,29 @@ export const authApi = {
 
     if (res.success && res.data) {
       tokenStorage.setTokens(res.data, false);
+      return res;
     }
+
+    if (isNetworkError(res)) {
+      const offlineRes = await offlineDb.registerFaculty(payload);
+      if (offlineRes.success && offlineRes.data) {
+        tokenStorage.setTokens(offlineRes.data, false);
+      }
+      return offlineRes;
+    }
+
     return res;
   },
 
   getMe: async () => {
-    return apiRequest<UserSession>("/auth/me");
+    const res = await apiRequest<UserSession>("/auth/me");
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getMe();
+    }
+    return res;
   },
 
   logout: async () => {
@@ -180,7 +247,14 @@ export const authApi = {
 // Student API
 export const studentApi = {
   getMyProfile: async () => {
-    return apiRequest<any>("/students/me");
+    const res = await apiRequest<any>("/students/me");
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getMyProfile();
+    }
+    return res;
   },
 
   updateMyName: async (payload: {
@@ -252,10 +326,17 @@ export const facultyApi = {
     percentage_12th?: number;
     year_of_passing_12th?: number;
   }) => {
-    return apiRequest<any>("/students", {
+    const res = await apiRequest<any>("/students", {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.addStudent(payload);
+    }
+    return res;
   },
 };
 
@@ -281,11 +362,21 @@ export interface DayTimetable {
 
 export interface WeeklyTimetableResponse {
   days: DayTimetable[];
+  classroom_id?: number;
+  classroom_name?: string;
+  academic_year?: string;
 }
 
 export const timetableApi = {
   getWeeklyTimetable: async () => {
-    return await apiRequest<WeeklyTimetableResponse>("/timetable");
+    const res = await apiRequest<WeeklyTimetableResponse>("/timetable");
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getWeeklyTimetable();
+    }
+    return res;
   },
 
   updateSlot: async (slotId: number, payload: Partial<TimetableSlot>) => {
@@ -333,14 +424,28 @@ export interface BulkPeriodAttendanceRequest {
 
 export const attendanceApi = {
   recordPeriodAttendance: async (payload: BulkPeriodAttendanceRequest) => {
-    return await apiRequest<any>("/attendance/period", {
+    const res = await apiRequest<any>("/attendance/period", {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.recordPeriodAttendance(payload);
+    }
+    return res;
   },
 
   getPeriodAttendance: async (date: string, periodNumber: number) => {
-    return await apiRequest<any>(`/attendance/period?date=${date}&period_number=${periodNumber}`);
+    const res = await apiRequest<any>(`/attendance/period?date=${date}&period_number=${periodNumber}`);
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getPeriodAttendance(date, periodNumber);
+    }
+    return res;
   },
 };
 
@@ -349,35 +454,34 @@ export interface Classroom {
   id: number;
   class_name: string;
   class_code: string;
-  department_id?: number;
-  department_name?: string;
+  department_id: number;
   academic_year: string;
   year: string;
   semester: number;
   section: string;
-  advisor_faculty_id?: number;
-  tutor_faculty_id?: number;
+  status?: string;
+  students_count?: number;
+  created_at?: string;
+  students?: any[];
+  subjects?: any[];
   advisor_name?: string;
   tutor_name?: string;
-  student_count: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
 }
 
-export interface ClassroomDetailResponse extends Classroom {
+export interface ClassroomDetailResponse {
+  classroom: Classroom;
   students: any[];
+  subjects: any[];
 }
 
 export const classroomApi = {
   createClassroom: async (payload: {
     class_name: string;
+    department_id?: number;
     academic_year: string;
     year: string;
     semester: number;
     section: string;
-    advisor_faculty_id?: number;
-    tutor_faculty_id?: number;
   }) => {
     return await apiRequest<Classroom>("/classrooms", {
       method: "POST",
@@ -386,15 +490,22 @@ export const classroomApi = {
   },
 
   getMyClassroom: async () => {
-    return await apiRequest<ClassroomDetailResponse>("/classrooms/my");
+    const res = await apiRequest<Classroom>("/classrooms/my-classroom");
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getMyClassroom();
+    }
+    return res;
   },
 
-  getClassroomDetail: async (id: number) => {
-    return await apiRequest<ClassroomDetailResponse>(`/classrooms/${id}`);
+  getClassroomDetail: async (classroomId: number) => {
+    return await apiRequest<ClassroomDetailResponse>(`/classrooms/${classroomId}`);
   },
 
-  getDepartmentClassrooms: async (deptId: number) => {
-    return await apiRequest<Classroom[]>(`/classrooms/department/${deptId}`);
+  getDepartmentClassrooms: async (departmentId: number) => {
+    return await apiRequest<Classroom[]>(`/departments/${departmentId}/classrooms`);
   },
 
   createStudentInClassroom: async (
@@ -444,10 +555,17 @@ export const profileRequestApi = {
     requested_value: string;
     reason: string;
   }) => {
-    return await apiRequest<ProfileEditRequest>("/students/me/profile-edit-requests", {
+    const res = await apiRequest<ProfileEditRequest>("/students/me/profile-edit-requests", {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.submitEditRequest(payload);
+    }
+    return res;
   },
 
   submitNameChangeRequest: async (payload: { requested_name: string; reason: string }) => {
@@ -467,27 +585,55 @@ export const profileRequestApi = {
   },
 
   getMyRequests: async () => {
-    return await apiRequest<ProfileEditRequest[]>("/students/me/profile-edit-requests");
+    const res = await apiRequest<ProfileEditRequest[]>("/students/me/profile-edit-requests");
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getMyRequests();
+    }
+    return res;
   },
 
   getClassroomRequests: async (classroomId: number, status?: string) => {
-    return await apiRequest<ProfileEditRequest[]>(
+    const res = await apiRequest<ProfileEditRequest[]>(
       `/classrooms/${classroomId}/profile-edit-requests${status ? `?status=${status}` : ""}`
     );
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.getClassroomRequests(classroomId, status);
+    }
+    return res;
   },
 
   approveRequest: async (requestId: number, review?: { advisor_comment?: string; permission_duration_hours?: number }) => {
-    return await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/approve`, {
+    const res = await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/approve`, {
       method: "POST",
       body: JSON.stringify(review || { action: "APPROVE", permission_duration_hours: 24 }),
     });
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.approveRequest(requestId, review?.advisor_comment);
+    }
+    return res;
   },
 
   rejectRequest: async (requestId: number, review?: { advisor_comment?: string }) => {
-    return await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/reject`, {
+    const res = await apiRequest<ProfileEditRequest>(`/profile-edit-requests/${requestId}/reject`, {
       method: "POST",
       body: JSON.stringify(review || { action: "REJECT" }),
     });
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.rejectRequest(requestId, review?.advisor_comment);
+    }
+    return res;
   },
 
   applyApprovedField: async (payload: { field_name: string; new_value: string }) => {
@@ -498,10 +644,17 @@ export const profileRequestApi = {
   },
 
   applyApprovedProfile: async (payload: Record<string, any>) => {
-    return await apiRequest<any>("/students/me/approved-profile", {
+    const res = await apiRequest<any>("/students/me/approved-profile", {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+    if (res.success && res.data) {
+      return res;
+    }
+    if (isNetworkError(res)) {
+      return offlineDb.applyApprovedProfile(payload);
+    }
+    return res;
   },
 
   completeProfile: async (payload: Record<string, any>) => {
@@ -518,13 +671,19 @@ export const achievementApi = {
     return apiRequest<any[]>(`/students/${studentId}/achievements`);
   },
   create: async (payload: { student_id: number; title: string; description?: string; organization?: string; event_name?: string; achievement_date?: string; leadership_role?: string; position?: string }) => {
-    return apiRequest<any>("/achievements", { method: "POST", body: JSON.stringify(payload) });
+    const res = await apiRequest<any>("/achievements", { method: "POST", body: JSON.stringify(payload) });
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.addAchievement(payload);
+    return res;
   },
   update: async (id: number, payload: Record<string, any>) => {
     return apiRequest<any>(`/achievements/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
   delete: async (id: number) => {
-    return apiRequest<any>(`/achievements/${id}`, { method: "DELETE" });
+    const res = await apiRequest<any>(`/achievements/${id}`, { method: "DELETE" });
+    if (res.success) return res;
+    if (isNetworkError(res)) return offlineDb.deleteAchievement(id);
+    return res;
   },
 };
 
@@ -534,13 +693,19 @@ export const skillApi = {
     return apiRequest<any[]>(`/students/${studentId}/skills`);
   },
   create: async (payload: { student_id: number; name: string; category?: string; proficiency_level?: string }) => {
-    return apiRequest<any>("/skills", { method: "POST", body: JSON.stringify(payload) });
+    const res = await apiRequest<any>("/skills", { method: "POST", body: JSON.stringify(payload) });
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.addSkill(payload);
+    return res;
   },
   update: async (id: number, payload: Record<string, any>) => {
     return apiRequest<any>(`/skills/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
   delete: async (id: number) => {
-    return apiRequest<any>(`/skills/${id}`, { method: "DELETE" });
+    const res = await apiRequest<any>(`/skills/${id}`, { method: "DELETE" });
+    if (res.success) return res;
+    if (isNetworkError(res)) return offlineDb.deleteSkill(id);
+    return res;
   },
 };
 
@@ -550,13 +715,19 @@ export const certificateApi = {
     return apiRequest<any[]>(`/students/${studentId}/certificates`);
   },
   create: async (payload: { student_id: number; title: string; issuing_organization?: string; issue_date?: string; credential_id?: string; credential_url?: string; thumbnail_url?: string }) => {
-    return apiRequest<any>("/certificates", { method: "POST", body: JSON.stringify(payload) });
+    const res = await apiRequest<any>("/certificates", { method: "POST", body: JSON.stringify(payload) });
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.addCertificate(payload);
+    return res;
   },
   update: async (id: number, payload: Record<string, any>) => {
     return apiRequest<any>(`/certificates/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
   delete: async (id: number) => {
-    return apiRequest<any>(`/certificates/${id}`, { method: "DELETE" });
+    const res = await apiRequest<any>(`/certificates/${id}`, { method: "DELETE" });
+    if (res.success) return res;
+    if (isNetworkError(res)) return offlineDb.deleteCertificate(id);
+    return res;
   },
 };
 
@@ -566,13 +737,19 @@ export const projectApi = {
     return apiRequest<any[]>(`/students/${studentId}/projects`);
   },
   create: async (payload: { student_id: number; title: string; short_description?: string; detailed_description?: string; student_role?: string; start_date?: string; end_date?: string; github_url?: string; live_demo_url?: string; project_image_url?: string; technology_names?: string[] }) => {
-    return apiRequest<any>("/projects", { method: "POST", body: JSON.stringify(payload) });
+    const res = await apiRequest<any>("/projects", { method: "POST", body: JSON.stringify(payload) });
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.addProject(payload);
+    return res;
   },
   update: async (id: number, payload: Record<string, any>) => {
     return apiRequest<any>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
   delete: async (id: number) => {
-    return apiRequest<any>(`/projects/${id}`, { method: "DELETE" });
+    const res = await apiRequest<any>(`/projects/${id}`, { method: "DELETE" });
+    if (res.success) return res;
+    if (isNetworkError(res)) return offlineDb.deleteProject(id);
+    return res;
   },
 };
 
@@ -598,7 +775,10 @@ export const remarkApi = {
     return apiRequest<any[]>(`/students/${studentId}/remarks`);
   },
   create: async (payload: { student_id: number; faculty_id?: number; grade: string; remark: string }) => {
-    return apiRequest<any>("/remarks", { method: "POST", body: JSON.stringify(payload) });
+    const res = await apiRequest<any>("/remarks", { method: "POST", body: JSON.stringify(payload) });
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.addRemark(payload);
+    return res;
   },
   update: async (id: number, payload: Record<string, any>) => {
     return apiRequest<any>(`/remarks/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -646,12 +826,21 @@ export const academicApi = {
 // Student update API (for profile updates)
 export const studentUpdateApi = {
   updateStudent: async (studentId: number | string, payload: Record<string, any>) => {
-    return apiRequest<any>(`/students/${studentId}`, { method: "PATCH", body: JSON.stringify(payload) });
+    const res = await apiRequest<any>(`/students/${studentId}`, { method: "PATCH", body: JSON.stringify(payload) });
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.updateStudent(studentId, payload);
+    return res;
   },
   getStudentDetail: async (studentId: number | string) => {
-    return apiRequest<any>(`/students/${studentId}`);
+    const res = await apiRequest<any>(`/students/${studentId}`);
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.getStudentDetail(studentId);
+    return res;
   },
   searchStudents: async (query: string) => {
-    return apiRequest<any>(`/students/search?q=${encodeURIComponent(query)}`);
+    const res = await apiRequest<any>(`/students/search?q=${encodeURIComponent(query)}`);
+    if (res.success && res.data) return res;
+    if (isNetworkError(res)) return offlineDb.searchStudents(query);
+    return res;
   },
 };

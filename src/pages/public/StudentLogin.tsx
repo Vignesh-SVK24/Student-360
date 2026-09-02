@@ -192,6 +192,20 @@ export default function StudentLogin() {
                 <span>{loading ? "Signing in..." : "Access Student Portal"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+
+              <div className="pt-4 text-center border-t border-white/10 text-xs text-slate-400">
+                <span>Quick Fill Demo: </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIdentifier("23AIM001");
+                    setPassword("Student@360");
+                  }}
+                  className="font-bold text-purple-400 hover:text-purple-300 underline ml-1 cursor-pointer"
+                >
+                  23AIM001 / Student@360
+                </button>
+              </div>
             </form>
           </div>
         </div>

@@ -389,6 +389,20 @@ export default function FacultyLogin() {
                   <span>Register Account</span>
                 </button>
               </div>
+
+              <div className="pt-2 text-center text-xs text-slate-400">
+                <span>Quick Fill Demo: </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIdentifier("FAC-AIML-01");
+                    setPassword("Faculty@360");
+                  }}
+                  className="font-bold text-emerald-400 hover:text-emerald-300 underline ml-1 cursor-pointer"
+                >
+                  FAC-AIML-01 / Faculty@360
+                </button>
+              </div>
             </form>
           </div>
         </div>
