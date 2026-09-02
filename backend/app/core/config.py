@@ -1,7 +1,11 @@
 from typing import List, Union
+from pathlib import Path
 import json
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+DB_PATH = BACKEND_DIR / "student360.db"
 
 
 class Settings(BaseSettings):
@@ -34,7 +38,7 @@ class Settings(BaseSettings):
                 return [i.strip() for i in v.split(",") if i.strip()]
         return v
 
-    DATABASE_URL: str = "sqlite:///./student360.db"
+    DATABASE_URL: str = f"sqlite:///{DB_PATH.as_posix()}"
 
     STORAGE_BACKEND: str = "local"
     STORAGE_BASE_PATH: str = "./uploads"
