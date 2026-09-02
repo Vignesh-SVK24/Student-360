@@ -230,15 +230,16 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ isOpen, onClos
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-slate-300 font-semibold mb-1">
-                        Register Number <span className="text-rose-400">*</span>
+                        Register Number (12 Digits) <span className="text-rose-400">*</span>
                       </label>
                       <input
                         type="text"
                         required
+                        maxLength={12}
                         value={formData.register_number}
                         onChange={(e) => handleChange("register_number", e.target.value.toUpperCase())}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-mono uppercase focus:outline-none focus:border-[#629176]"
-                        placeholder="23AIM099"
+                        placeholder="720725115000"
                       />
                     </div>
                     <div>

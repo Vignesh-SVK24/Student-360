@@ -35,42 +35,48 @@ const STORAGE_KEYS = {
 
 // Seed initial users if not present
 function initializeOfflineStore() {
+  if (localStorage.getItem(STORAGE_KEYS.USERS) && !localStorage.getItem("s360_db_v3")) {
+    localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem(STORAGE_KEYS.STUDENTS);
+    localStorage.setItem("s360_db_v3", "true");
+  }
+
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
     const initialUsers: StoredUser[] = [
       {
         id: 1,
         email: "ramanujam.s@college.edu",
-        username: "FAC-AIML-01",
+        username: "ramanujam115",
         password: "Faculty@360",
         role: "FACULTY",
         assigned_role: "CLASS_ADVISOR",
         name: "Dr. S. Ramanujam",
         profile_id: 1,
-        identifier: "FAC-AIML-01",
+        identifier: "ramanujam115",
         department_name: "Artificial Intelligence & Data Science",
         is_active: true,
       },
       {
         id: 2,
         email: "arun.kumar@college.edu",
-        username: "23AIM001",
+        username: "720725115001",
         password: "Student@360",
         role: "STUDENT",
         name: "Arun Kumar",
         profile_id: 1,
-        identifier: "23AIM001",
+        identifier: "720725115001",
         department_name: "Artificial Intelligence & Data Science",
         is_active: true,
       },
       {
         id: 3,
         email: "vignesh.k@college.edu",
-        username: "23AIM002",
+        username: "720725115002",
         password: "Student@360",
         role: "STUDENT",
         name: "Vignesh K",
         profile_id: 2,
-        identifier: "23AIM002",
+        identifier: "720725115002",
         department_name: "Artificial Intelligence & Data Science",
         is_active: true,
       },
@@ -83,7 +89,7 @@ function initializeOfflineStore() {
       {
         id: 1,
         user_id: 2,
-        register_number: "23AIM001",
+        register_number: "720725115001",
         first_name: "Arun",
         last_name: "Kumar",
         full_name: "Arun Kumar",
@@ -228,12 +234,12 @@ export const offlineDb = {
     const cleanId = identifier.trim().toLowerCase();
 
     const user = users.find(
-      (u) => u.role === "STUDENT" && (u.username.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId)
+      (u) => u.role === "STUDENT" && (u.username.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId || u.identifier.toLowerCase() === cleanId)
     );
 
     if (!user) {
-      // For effortless testing, if entering default credentials allow login
-      if (cleanId === "23aim001" || cleanId.startsWith("23aim")) {
+      // Allow effortless login for 12-digit register numbers or legacy IDs
+      if (cleanId === "720725115001" || cleanId.startsWith("7207") || cleanId.length === 12 || cleanId.startsWith("23aim")) {
         const studentUser: StoredUser = {
           id: 2,
           email: `${cleanId}@college.edu`,
@@ -264,28 +270,28 @@ export const offlineDb = {
     const cleanId = identifier.trim().toLowerCase();
 
     const user = users.find(
-      (u) => u.role === "FACULTY" && (u.username.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId)
+      (u) => u.role === "FACULTY" && (u.username.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId || u.identifier.toLowerCase() === cleanId)
     );
 
     if (!user) {
-      // Fallback for default advisor demo
-      if (cleanId === "fac-aiml-01" || cleanId.includes("faculty") || cleanId.includes("ramanujam")) {
+      // Fallback for advisor demo with ramanujam115 or name115
+      if (cleanId === "ramanujam115" || cleanId.endsWith("115") || cleanId === "fac-aiml-01" || cleanId.includes("faculty") || cleanId.includes("ramanujam")) {
         const facUser: StoredUser = {
           id: 1,
           email: "ramanujam.s@college.edu",
-          username: "FAC-AIML-01",
+          username: "ramanujam115",
           password: pass || "Faculty@360",
           role: "FACULTY",
           assigned_role: "CLASS_ADVISOR",
           name: "Dr. S. Ramanujam",
           profile_id: 1,
-          identifier: "FAC-AIML-01",
+          identifier: "ramanujam115",
           department_name: "Artificial Intelligence & Data Science",
           is_active: true,
         };
         return { success: true, data: createMockAuthTokens(facUser) };
       }
-      return { success: false, error: `Faculty account '${identifier}' not found. Please register or use FAC-AIML-01.` };
+      return { success: false, error: `Faculty account '${identifier}' not found. Please register or use ramanujam115.` };
     }
 
     if (user.password && user.password !== pass) {

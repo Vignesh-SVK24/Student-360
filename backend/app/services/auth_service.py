@@ -102,8 +102,8 @@ class AuthService:
         student = self.student_repo.get_by_register_number(cleaned) or self.student_repo.get_by_email(cleaned)
 
         if not student:
-            # Fallback: check if a user exists with this email
-            user = self.user_repo.get_by_email(cleaned)
+            # Fallback: check if a user exists with this username or email
+            user = self.user_repo.get_by_username(cleaned) or self.user_repo.get_by_email(cleaned)
             if user and user.role == UserRole.STUDENT.value:
                 student = self.student_repo.get_by_user_id(user.id)
 
@@ -121,7 +121,7 @@ class AuthService:
             self.audit.log(
                 action="LOGIN_FAILED",
                 actor_type=AuditActorType.STUDENT.value,
-                actor_id=str(student.register_number),
+                actor_id=cleaned,
                 entity_type="User",
                 entity_id=str(user.id),
                 new_data={"reason": "Incorrect password"},
@@ -147,7 +147,7 @@ class AuthService:
         faculty = self.faculty_repo.get_by_faculty_id(cleaned) or self.faculty_repo.get_by_email(cleaned)
 
         if not faculty:
-            user = self.user_repo.get_by_email(cleaned)
+            user = self.user_repo.get_by_username(cleaned) or self.user_repo.get_by_email(cleaned)
             if user and user.role in [UserRole.FACULTY.value, UserRole.ADMIN.value]:
                 faculty = self.faculty_repo.get_by_user_id(user.id)
 

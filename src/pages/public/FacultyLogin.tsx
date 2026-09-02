@@ -292,7 +292,7 @@ export default function FacultyLogin() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
-                  Faculty ID or Email
+                  Faculty Username / Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -303,8 +303,8 @@ export default function FacultyLogin() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-[#629176] text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#629176]/25 transition-all font-medium"
-                    placeholder="FAC-AIML-01 or faculty@college.edu"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-[#629176] text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#629176]/25 transition-all font-medium font-mono"
+                    placeholder="e.g. ramanujam115 or email"
                   />
                 </div>
               </div>
@@ -395,12 +395,12 @@ export default function FacultyLogin() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIdentifier("FAC-AIML-01");
+                    setIdentifier("ramanujam115");
                     setPassword("Faculty@360");
                   }}
                   className="font-bold text-emerald-400 hover:text-emerald-300 underline ml-1 cursor-pointer"
                 >
-                  FAC-AIML-01 / Faculty@360
+                  ramanujam115 / Faculty@360
                 </button>
               </div>
             </form>
@@ -444,21 +444,34 @@ export default function FacultyLogin() {
                     type="text"
                     required
                     value={regData.name}
-                    onChange={(e) => setRegData({ ...regData, name: e.target.value })}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      const clean = newName.toLowerCase().replace(/^(dr|prof|mr|ms|mrs)\.?\s*/i, '').replace(/[^a-z0-9]/g, '');
+                      setRegData((prev) => ({
+                        ...prev,
+                        name: newName,
+                        faculty_id: (!prev.faculty_id || prev.faculty_id.endsWith("115"))
+                          ? (clean ? `${clean}115` : "")
+                          : prev.faculty_id,
+                      }));
+                    }}
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#629176]"
                     placeholder="Dr. Rajesh Kumar"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Faculty ID</label>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Faculty Username <span className="text-[#629176] text-[10px]">(Name + 115)</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={regData.faculty_id}
-                    onChange={(e) => setRegData({ ...regData, faculty_id: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-mono uppercase focus:outline-none focus:border-[#629176]"
-                    placeholder="FAC-CSE-05"
+                    onChange={(e) => setRegData({ ...regData, faculty_id: e.target.value.toLowerCase() })}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-mono focus:outline-none focus:border-[#629176]"
+                    placeholder="e.g. rajesh115"
                   />
+                  <p className="text-[10px] text-slate-400 mt-1">Format: Your name with 115 (AIML branch code)</p>
                 </div>
               </div>
 
@@ -512,18 +525,6 @@ export default function FacultyLogin() {
                     placeholder="+91 98400 12345"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Academic Designation</label>
-                <input
-                  type="text"
-                  required
-                  value={regData.designation}
-                  onChange={(e) => setRegData({ ...regData, designation: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#629176]"
-                  placeholder="Assistant Professor / Associate Professor"
-                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">

@@ -106,10 +106,16 @@ export default function Landing() {
               </div>
             </div>
 
-            <button className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0d4933] to-[#629176] hover:from-[#0a3827] hover:to-[#507a62] text-[#f2ebde] border border-[#629176]/50 text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0d4933]/50 transition-all group-hover:gap-3 cursor-pointer">
-              <span>Enter Faculty Portal</span>
-              <ArrowRight className="w-4 h-4 text-[#c1912a]" />
-            </button>
+            <div>
+              <div className="mb-3 px-3.5 py-2 rounded-xl bg-[#0d4933]/80 border border-[#629176]/40 text-[11px] text-[#f2ebde]/80 flex items-center justify-between shadow-inner">
+                <span>Demo Faculty ID: <strong className="text-emerald-300 font-mono">ramanujam115</strong></span>
+                <span className="text-[#f2ebde]/60">Pass: <span className="font-mono text-[#f2ebde]">Faculty@360</span></span>
+              </div>
+              <button className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0d4933] to-[#629176] hover:from-[#0a3827] hover:to-[#507a62] text-[#f2ebde] border border-[#629176]/50 text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0d4933]/50 transition-all group-hover:gap-3 cursor-pointer">
+                <span>Enter Faculty Portal</span>
+                <ArrowRight className="w-4 h-4 text-[#c1912a]" />
+              </button>
+            </div>
           </motion.div>
 
           {/* Student Card */}
@@ -152,8 +158,8 @@ export default function Landing() {
 
             <div>
               <div className="mb-3 px-3.5 py-2 rounded-xl bg-[#0d4933]/80 border border-[#c1912a]/30 text-[11px] text-[#f2ebde]/80 flex items-center justify-between shadow-inner">
-                <span>Demo Student ID: <strong className="text-[#c1912a] font-mono">23AIM001</strong></span>
-                <span className="text-[#f2ebde]/60">Pass: <span className="font-mono text-[#f2ebde]">student123</span></span>
+                <span>Demo Student ID: <strong className="text-[#c1912a] font-mono">720725115001</strong></span>
+                <span className="text-[#f2ebde]/60">Pass: <span className="font-mono text-[#f2ebde]">Student@360</span></span>
               </div>
               <button className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#c1912a] via-[#dfa938] to-[#c1912a] hover:from-[#b08323] hover:to-[#c1912a] text-[#0d4933] text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-[#c1912a]/35 transition-all group-hover:gap-3 cursor-pointer border border-[#f2ebde]/30">
                 <span>Enter Student Portal</span>

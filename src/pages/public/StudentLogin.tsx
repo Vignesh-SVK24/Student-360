@@ -121,7 +121,7 @@ export default function StudentLogin() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
-                  Register Number / Student ID
+                  Register Number (12 Digits) or Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -132,8 +132,9 @@ export default function StudentLogin() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
+                    maxLength={12}
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 focus:border-purple-500 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-medium font-mono"
-                    placeholder="e.g. 23AIM001"
+                    placeholder="e.g. 720725115000"
                   />
                 </div>
               </div>
@@ -198,12 +199,12 @@ export default function StudentLogin() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIdentifier("23AIM001");
+                    setIdentifier("720725115001");
                     setPassword("Student@360");
                   }}
                   className="font-bold text-purple-400 hover:text-purple-300 underline ml-1 cursor-pointer"
                 >
-                  23AIM001 / Student@360
+                  720725115001 / Student@360
                 </button>
               </div>
             </form>
